@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bd:#d1d5db; --mut:#6b7280; --pri:#2563eb; --red:#dc2626; --grn:#16a34a; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 13px; margin: 0; padding: 12px; color: #111827; }
+  h3 { margin: 0 0 8px; font-size: 15px; } h4 { margin: 14px 0 6px; font-size: 13px; }
+  label { display:block; font-weight:bold; margin: 8px 0 3px; font-size: 12px; }
+  input, select, textarea { width:100%; padding:7px; border:1px solid var(--bd); border-radius:6px; font-size:13px; font-family:inherit; }
+  textarea { min-height: 50px; resize: vertical; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; } .row > div { flex:1; min-width:120px; }
+  button { padding:8px 12px; border:0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; background:#e5e7eb; }
+  button.pri { background:var(--pri); color:#fff; } button.del { background:var(--red); color:#fff; } button.grn { background:var(--grn); color:#fff; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .tabs { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .tabs button.on { background:#1f2937; color:#fff; }
+  .pane { display:none; } .pane.on { display:block; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th, td { text-align:left; padding:6px; border-bottom:1px solid #eee; vertical-align:top; }
+  th { background:#f3f4f6; }
+  tr.click { cursor:pointer; } tr.click:hover { background:#eff6ff; } tr.sel { background:#dbeafe; }
+  .badge { padding:2px 7px; border-radius:10px; font-size:11px; font-weight:bold; white-space:nowrap; }
+  .Pending{background:#fef3c7;color:#92400e} .Confirmed{background:#dbeafe;color:#1e40af} .Processing{background:#ede9fe;color:#5b21b6}
+  .Shipped{background:#cffafe;color:#155e75} .Delivered{background:#dcfce7;color:#166534} .Cancelled{background:#fee2e2;color:#991b1b}
+  .box { border:1px solid var(--bd); border-radius:8px; padding:10px; margin-top:10px; }
+  .scroll { max-height:260px; overflow:auto; border:1px solid var(--bd); border-radius:6px; }
+  #msg { margin-top:12px; padding:8px; border-radius:6px; background:#f9fafb; border:1px solid #e5e7eb; min-height:34px; white-space:pre-wrap; font-size:12px; }
+  .ok { color:var(--grn); } .err { color:var(--red); } .mut { color:var(--mut); }
+  .tot { text-align:right; font-size:14px; font-weight:bold; margin-top:8px; }
+</style>
+</head>
+<body>
+  <h3>🧾 Order Manager <small style="color:#9ca3af;font-weight:normal">v4</small></h3>
+  <div class="tabs">
+    <button id="t_orders" onclick="A.tab('orders')">Orders</button>
+    <button id="t_new" onclick="A.tab('new')">+ New Order (Local)</button>
+    <button id="t_money" onclick="A.tab('money')">Expenses &amp; Withdraw</button>
+    <button onclick="A.reload()">↻ Refresh</button>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="pane" id="p_orders">
+    <div class="row">
+      <div><input id="q" placeholder="Search order ID, name, phone, product" oninput="A.renderOrders()"></div>
+      <div><select id="fs" onchange="A.renderOrders()"></select></div>
+    </div>
+    <div class="scroll" style="margin-top:8px"><table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Source</th></tr></thead><tbody id="olist"></tbody></table></div>
+    <div class="box" id="detail" style="display:none"></div>
+  </div>
+
+  <!-- NEW ORDER -->
+  <div class="pane" id="p_new">
+    <div id="editBanner" class="box" style="display:none;background:#fffbeb"></div>
+    <div class="row">
+      <div><label>Customer name (blank = Walk-in)</label><input id="cn"></div>
+      <div><label>Phone * (01XXXXXXXXX)</label><input id="cp"></div>
+      <div><label>Email (optional)</label><input id="ce"></div>
+    </div>
+    <div class="row">
+      <div><label>Address *</label><input id="ca"></div>
+      <div><label>City / Area *</label><input id="cc"></div>
+    </div>
+    <div class="row">
+      <div><label>Order date</label><input id="od" type="date"></div>
+      <div><label>Status</label><select id="os"></select></div>
+      <div><label>Payment</label><select id="op"></select></div>
+      <div><label>Delivery charge</label><input id="odl" type="number" min="0" step="0.01" value="0" oninput="A.renderCart()"></div>
+    </div>
+    <label>Note</label><input id="on">
+
+    <h4>Add products</h4>
+    <div class="row">
+      <div style="flex:2"><input id="ps" placeholder="Search product…" oninput="A.fillPicker()"><select id="pp" onchange="A.pickChanged()" size="4" style="margin-top:4px"></select></div>
+      <div><label>Qty</label><input id="pq" type="number" min="1" step="1" value="1"></div>
+      <div><label>Unit price</label><input id="ppr" type="number" min="0" step="0.01"></div>
+      <div style="align-self:flex-end"><button class="pri" onclick="A.addLine()">Add</button></div>
+    </div>
+    <div class="box"><table><thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th><th></th></tr></thead><tbody id="cart"></tbody></table>
+      <div class="tot" id="ctot"></div></div>
+    <div style="margin-top:10px"><button class="grn" id="createBtn" onclick="A.create()">Create Order</button>
+      <button id="clearBtn" onclick="A.clearNew()">Clear</button></div>
+  </div>
+
+  <!-- MONEY -->
+  <div class="pane" id="p_money">
+    <div class="row">
+      <div class="box" style="flex:1">
+        <b>Add Expense</b>
+        <label>Type</label><select id="et"></select>
+        <div class="row"><div><label>Amount</label><input id="ea" type="number" min="0" step="0.01"></div><div><label>Date</label><input id="ed" type="date"></div></div>
+        <label>Note</label><input id="en" placeholder="e.g. Pathao courier, bike fare">
+        <div style="margin-top:8px"><button class="pri" onclick="A.addExpense()">Save Expense</button></div>
+        <div class="mut" id="etot" style="margin-top:6px"></div>
+        <div class="scroll" style="margin-top:6px"><table><tbody id="elist"></tbody></table></div>
+      </div>
+      <div class="box" style="flex:1">
+        <b>Personal Withdraw</b>
+        <div class="row"><div><label>Amount</label><input id="wa" type="number" min="0" step="0.01"></div><div><label>Date</label><input id="wd" type="date"></div></div>
+        <label>Note</label><input id="wn" placeholder="e.g. family expense">
+        <div style="margin-top:8px"><button class="pri" onclick="A.addWithdraw()">Save Withdraw</button></div>
+        <div class="mut" id="wtot" style="margin-top:6px"></div>
+        <div class="scroll" style="margin-top:6px"><table><tbody id="wlist"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="msg">Loading…</div>
+
+<script>
+  window.addEventListener('error', function (e) {
+    var l = document.getElementById('msg');
+    if (l) { l.style.color = '#dc2626'; l.textContent = '✗ Script error: ' + e.message + (e.lineno ? ' (line ' + e.lineno + ')' : ''); }
+  });
+</script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let D = { orders: [], products: [], statuses: [], payments: [], expenseTypes: [], defaultDelivery: 0 };
+  let sel = null, cart = [], M = null, editId = null;
+
+  function call(fn, ...args) {
+    return new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args));
+  }
+  function msg(t, cls) { const m = $('msg'); m.className = cls || ''; m.style.color = ''; m.textContent = t; }
+  function esc(s) { return String(s == null ? '' : s).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;'); }
+  function money(n) { return '৳' + Number(n || 0).toLocaleString(); }
+  function today() {
+    const d = new Date(), z = n => (n < 10 ? '0' : '') + n;
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+  }
+  function opts(arr) { return arr.map(x => '<option>' + esc(x) + '</option>').join(''); }
+
+  // ---------- load ----------
+  async function reload() {
+    try {
+      D = JSON.parse(await call('getOrderMgrData'));
+      $('fs').innerHTML = '<option value="">All statuses</option>' + opts(D.statuses);
+      const prevOs = $('os').value, prevOp = $('op').value;
+      $('os').innerHTML = opts(D.statuses); $('os').value = editId ? prevOs : 'Delivered';
+      $('op').innerHTML = opts(D.payments); $('op').value = editId ? prevOp : 'Cash (Local Sale)';
+      $('et').innerHTML = opts(D.expenseTypes);
+      fillPicker(); renderOrders(); renderCart();
+      if (sel) showDetail(sel);
+      msg('Ready. ' + D.orders.length + ' orders, ' + D.products.length + ' products loaded.');
+    } catch (e) { msg('✗ ' + (e && e.message ? e.message : e), 'err'); }
+  }
+
+  function tab(n) {
+    ['orders', 'new', 'money'].forEach(k => {
+      $('p_' + k).className = 'pane' + (k === n ? ' on' : '');
+      $('t_' + k).className = k === n ? 'on' : '';
+    });
+    if (n === 'money') loadMoney();
+  }
+
+  // ---------- orders ----------
+  function renderOrders() {
+    const q = $('q').value.trim().toLowerCase(), fs = $('fs').value;
+    const list = D.orders.filter(o => {
+      if (fs && o.status !== fs) return false;
+      if (!q) return true;
+      const hay = (o.orderId + ' ' + o.customer.name + ' ' + o.customer.phone + ' ' + o.items.map(i => i.productName).join(' ')).toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+    $('olist').innerHTML = list.length ? list.map(o =>
+      '<tr class="click' + (sel === o.orderId ? ' sel' : '') + '" data-id="' + esc(o.orderId) + '" onclick="A.show(this.getAttribute(&quot;data-id&quot;))">' +
+      '<td><b>' + esc(o.orderId) + '</b><br><span class="mut">' + esc(String(o.date).replace('T', ' ').slice(0, 16)) + '</span></td>' +
+      '<td>' + esc(o.customer.name) + '<br><span class="mut">' + esc(o.customer.phone) + '</span></td>' +
+      '<td>' + money(o.total) + '</td><td><span class="badge ' + esc(o.status) + '">' + esc(o.status) + '</span></td><td>' + esc(o.source) + '</td></tr>'
+    ).join('') : '<tr><td colspan="5" class="mut">No orders found</td></tr>';
+  }
+  function showDetail(id) {
+    const o = D.orders.filter(x => x.orderId === id)[0];
+    if (!o) { sel = null; $('detail').style.display = 'none'; return; }
+    sel = id;
+    $('detail').style.display = 'block';
+    $('detail').innerHTML =
+      '<b>' + esc(o.orderId) + '</b> · ' + esc(o.source) + ' · ' + esc(o.paymentMethod) +
+      '<div class="mut" style="margin:4px 0">' + esc(o.customer.name) + ' · ' + esc(o.customer.phone) + '<br>' + esc(o.customer.address) + ' ' + esc(o.customer.cityArea) +
+      (o.note ? '<br>Note: ' + esc(o.note) : '') + '</div>' +
+      '<table><thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead><tbody>' +
+      o.items.map(i => '<tr><td>' + esc(i.productName) + '</td><td>' + i.quantity + '</td><td>' + money(i.price) + '</td><td>' + money(i.subtotal) + '</td></tr>').join('') +
+      '</tbody></table>' +
+      '<div class="tot">Subtotal ' + money(o.subtotal) + ' + Delivery ' + money(o.deliveryCharge) + ' = ' + money(o.total) + '</div>' +
+      courierBox(o) +
+      '<div class="row" style="margin-top:8px"><div><select id="ns">' + opts(D.statuses) + '</select></div>' +
+      '<div><button class="pri" onclick="A.setStatus()">Update Status</button> ' + editButton(o) + ' <button class="del" onclick="A.remove()">Delete Order</button></div></div>' +
+      '<div class="mut" style="margin-top:4px">Delete removes the rows from the Orders sheet. Stock is not tracked by the system.</div>';
+    $('ns').value = o.status;
+    renderOrders();
+  }
+  function isSent(o) { return String((o.courier || {}).consignmentId || '') !== ''; }
+  function editButton(o) {
+    return isSent(o)
+      ? '<button disabled title="Sent to Steadfast. Remove it from Steadfast first to edit.">✏ Edit (locked: sent to Steadfast)</button>'
+      : '<button onclick="A.edit()">✏ Edit Order</button>';
+  }
+  function courierBox(o) {
+    const c = o.courier || {}, link = String(c.trackLink || '');
+    const hasCid = String(c.consignmentId || '') !== '';
+    return '<div class="box" style="background:#f9fafb"><b>🚚 Steadfast Courier</b>' +
+      '<div style="margin:4px 0">Item description: <span class="mut">' + esc(c.itemDescription || '(auto-filled when sent)') + '</span></div>' +
+      '<div>Courier status: <b>' + esc(c.status || 'Not sent') + '</b>' + (hasCid ? ' · Consignment: <b>' + esc(c.consignmentId) + '</b>' : '') +
+      (link.indexOf('https://') === 0 ? ' · <a href="' + esc(link) + '" target="_blank">Track parcel</a>' : '') + '</div>' +
+      '<div style="margin-top:8px"><button class="grn" onclick="A.cSend()">Send to Steadfast</button> ' +
+      '<button onclick="A.cRemove()">Remove from Steadfast</button> <button onclick="A.cRefresh()">↻ Refresh courier status</button></div></div>';
+  }
+  async function cSend() {
+    if (!sel) return;
+    if (!confirm('Create a Steadfast parcel for ' + sel + '?')) return;
+    try { msg('Creating parcel…'); const r = await call('courierSend', sel); await reload(); msg('✓ Parcel created. Consignment ' + r.consignmentId + ' · ' + r.status, 'ok'); }
+    catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+  async function cRemove() {
+    if (!sel) return;
+    if (!confirm('Remove the Steadfast parcel link of ' + sel + '?  (You can then send it again as a new parcel.)')) return;
+    try { msg('Removing…'); const r = await call('courierRemove', sel); await reload(); msg('✓ Removed #' + r.removed + '. ' + r.note, 'ok'); }
+    catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+  async function cRefresh() {
+    try { msg('Checking Steadfast…'); const r = await call('courierRefresh'); await reload(); msg('✓ ' + r.updated + ' parcel status updated, ' + r.errors + ' errors.', 'ok'); }
+    catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+  async function setStatus() {
+    if (!sel) return;
+    try { msg('Updating…'); await call('updateOrderStatus', sel, $('ns').value); await reload(); msg('✓ Status updated for ' + sel, 'ok'); }
+    catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+  async function remove() {
+    if (!sel) return;
+    const so = D.orders.filter(x => x.orderId === sel)[0];
+    if (!confirm('Delete order ' + sel + '? This removes it from the Orders sheet and cannot be undone.' + (so && isSent(so) ? '  WARNING: it is sent to Steadfast, the parcel there will NOT be deleted.' : ''))) return;
+    try { const id = sel; sel = null; $('detail').style.display = 'none'; await call('deleteOrder', id); await reload(); msg('✓ Deleted ' + id, 'ok'); }
+    catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+
+  // ---------- new (local) order ----------
+  function fillPicker() {
+    const q = $('ps').value.trim().toLowerCase();
+    const list = D.products.filter(p => !q || p.name.toLowerCase().indexOf(q) >= 0 || p.id.toLowerCase().indexOf(q) >= 0);
+    $('pp').innerHTML = list.map(p => '<option value="' + esc(p.id) + '">' + esc(p.name) + ' — ' + money(p.price) + ' — left ' + p.stock + '</option>').join('');
+  }
+  function pickChanged() {
+    const p = D.products.filter(x => x.id === $('pp').value)[0];
+    if (p) $('ppr').value = p.price;
+  }
+  function addLine() {
+    const p = D.products.filter(x => x.id === $('pp').value)[0];
+    if (!p) { msg('✗ Select a product from the list.', 'err'); return; }
+    const qty = Math.floor(Number($('pq').value)), price = $('ppr').value === '' ? p.price : Number($('ppr').value);
+    if (!(qty >= 1)) { msg('✗ Quantity must be 1 or more.', 'err'); return; }
+    if (!(price >= 0)) { msg('✗ Price is not valid.', 'err'); return; }
+    const ex = cart.filter(c => c.id === p.id)[0];
+    if (ex) { ex.qty += qty; ex.price = price; } else cart.push({ id: p.id, name: p.name, qty: qty, price: price });
+    $('pq').value = 1; msg('Added ' + p.name); renderCart();
+  }
+  function removeLine(i) { cart.splice(i, 1); renderCart(); }
+  function cartQty(i, v) {
+    const c = cart[i]; if (!c) return;
+    let q = Math.floor(Number(v)); if (!(q >= 1)) q = 1;
+    c.qty = q; renderCart();
+  }
+  function cartPrice(i, v) { const c = cart[i]; if (!c) return; const p = Number(v); c.price = p >= 0 ? p : c.price; renderCart(); }
+  function cartSub() { return cart.reduce((s, c) => s + c.qty * c.price, 0); }
+  function renderCart() {
+    $('cart').innerHTML = cart.length ? cart.map((c, i) =>
+      '<tr><td>' + esc(c.name) + '</td><td><input type="number" min="1" step="1" style="width:70px" value="' + c.qty + '" onchange="A.cq(' + i + ',this.value)"></td>' +
+      '<td><input type="number" min="0" step="0.01" style="width:90px" value="' + c.price + '" onchange="A.cp(' + i + ',this.value)"></td><td>' + money(c.qty * c.price) +
+      '</td><td><button onclick="A.rmLine(' + i + ')">✕</button></td></tr>').join('') : '<tr><td colspan="5" class="mut">No products added yet</td></tr>';
+    const del = Number($('odl').value) || 0;
+    $('ctot').textContent = 'Subtotal ' + money(cartSub()) + ' + Delivery ' + money(del) + ' = ' + money(cartSub() + del);
+  }
+  function setEditMode(on, label) {
+    $('editBanner').style.display = on ? 'block' : 'none';
+    $('editBanner').textContent = on ? label : '';
+    $('createBtn').textContent = on ? 'Save Changes' : 'Create Order';
+    $('clearBtn').textContent = on ? 'Cancel Edit' : 'Clear';
+  }
+  function clearNew() {
+    cart = []; editId = null;
+    ['cn', 'cp', 'ce', 'ca', 'cc', 'on'].forEach(k => { $(k).value = ''; });
+    $('od').value = today(); $('odl').value = 0; $('ps').value = '';
+    $('os').value = 'Delivered'; $('op').value = 'Cash (Local Sale)';
+    setEditMode(false); fillPicker(); renderCart();
+  }
+  function startEdit() {
+    const o = D.orders.filter(x => x.orderId === sel)[0];
+    if (!o) return;
+    if (isSent(o)) { msg('✗ This order is sent to Steadfast. Remove it from Steadfast first to edit.', 'err'); return; }
+    cart = []; editId = o.orderId;
+    o.items.forEach(i => { cart.push({ id: i.productId, name: i.productName, qty: i.quantity, price: i.price }); });
+    $('cn').value = o.customer.name; $('cp').value = o.customer.phone; $('ce').value = o.customer.email || '';
+    $('ca').value = o.customer.address; $('cc').value = o.customer.cityArea;
+    $('od').value = String(o.date).slice(0, 10); $('os').value = o.status; $('op').value = o.paymentMethod;
+    $('odl').value = o.deliveryCharge; $('on').value = o.note || '';
+    setEditMode(true, '✏ Editing ' + o.orderId + '. Change anything, then press Save Changes. (Editing is locked after the order is sent to Steadfast.)');
+    renderCart(); tab('new');
+  }
+  function cancelOrClear() {
+    if (editId) { const id = editId; clearNew(); tab('orders'); showDetail(id); msg('Edit cancelled.'); }
+    else clearNew();
+  }
+  function phoneOk(p) {
+    let d = String(p).split('').filter(ch => ch >= '0' && ch <= '9').join('');
+    if (d.length === 13 && d.indexOf('88') === 0) d = d.slice(2);
+    if (d.length === 10 && d.charAt(0) === '1') d = '0' + d;
+    return d.length === 11 && d.indexOf('01') === 0 && d.charAt(2) >= '3';
+  }
+  async function create() {
+    if (!cart.length) { msg('✗ Add at least one product.', 'err'); return; }
+    if (!phoneOk($('cp').value)) { msg('✗ Phone is required (valid 11-digit mobile number, like 01712345678).', 'err'); return; }
+    if ($('ca').value.trim().length < 5) { msg('✗ Address is required.', 'err'); return; }
+    if (!$('cc').value.trim()) { msg('✗ City / Area is required.', 'err'); return; }
+    $('createBtn').disabled = true;
+    const payload = {
+      customerName: $('cn').value, phone: $('cp').value, email: $('ce').value, address: $('ca').value, city: $('cc').value, note: $('on').value,
+      date: $('od').value, status: $('os').value, payment: $('op').value, deliveryCharge: $('odl').value,
+      items: cart.map(c => ({ productId: c.id, quantity: c.qty, price: c.price }))
+    };
+    try {
+      if (editId) {
+        msg('Saving changes…');
+        const r = await call('updateOrder', editId, payload), id = editId;
+        clearNew(); sel = id; await reload(); tab('orders'); showDetail(id);
+        msg('✓ Order ' + id + ' updated. Total ' + money(r.total) + '.', 'ok');
+      } else {
+        msg('Creating order…');
+        const r = await call('createManualOrder', payload);
+        sel = r.orderId; clearNew(); await reload(); tab('orders'); showDetail(r.orderId);
+        msg('✓ Order ' + r.orderId + ' created. Total ' + money(r.total) + '.', 'ok');
+      }
+    } catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+    $('createBtn').disabled = false;
+  }
+
+  // ---------- money ----------
+  async function loadMoney() {
+    try {
+      M = JSON.parse(await call('getMoneyData'));
+      $('etot').textContent = 'Total expenses: ' + money(M.totalExpenses);
+      $('wtot').textContent = 'Total withdraw: ' + money(M.totalWithdraw);
+      $('elist').innerHTML = M.expenses.map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + '</td><td>' + money(r[3]) + '</td></tr>').join('') || '<tr><td class="mut">No expenses yet</td></tr>';
+      $('wlist').innerHTML = M.withdrawals.map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + money(r[1]) + '</td><td>' + esc(r[2]) + '</td></tr>').join('') || '<tr><td class="mut">No withdraws yet</td></tr>';
+    } catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+  async function addExpense() {
+    try { await call('addExpense', $('et').value, $('ea').value, $('en').value, $('ed').value); $('ea').value = ''; $('en').value = ''; await loadMoney(); msg('✓ Expense saved (Dashboard updated).', 'ok'); }
+    catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+  async function addWithdraw() {
+    try { await call('addWithdrawal', $('wa').value, $('wn').value, $('wd').value); $('wa').value = ''; $('wn').value = ''; await loadMoney(); msg('✓ Withdraw saved (Dashboard updated).', 'ok'); }
+    catch (e) { msg('✗ ' + (e.message || e), 'err'); }
+  }
+
+  window.A = { tab: tab, reload: reload, renderOrders: renderOrders, show: showDetail, setStatus: setStatus, remove: remove,
+    fillPicker: fillPicker, pickChanged: pickChanged, addLine: addLine, rmLine: removeLine, renderCart: renderCart, clearNew: cancelOrClear, edit: startEdit, cq: cartQty, cp: cartPrice,
+    create: create, addExpense: addExpense, addWithdraw: addWithdraw, cSend: cSend, cRemove: cRemove, cRefresh: cRefresh };
+
+  $('od').value = today(); $('ed').value = today(); $('wd').value = today();
+  tab('orders'); reload();
+})();
+</script>
+</body>
+</html>

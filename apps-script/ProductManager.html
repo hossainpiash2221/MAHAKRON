@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#fff; --bd:#d1d5db; --mut:#6b7280; --pri:#2563eb; --red:#dc2626; --grn:#16a34a; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 13px; margin: 0; padding: 12px; color: #111827; }
+  h3 { margin: 0 0 8px; font-size: 15px; }
+  label { display:block; font-weight:bold; margin: 8px 0 3px; font-size: 12px; }
+  input, select, textarea { width:100%; padding:7px; border:1px solid var(--bd); border-radius:6px; font-size:13px; font-family:inherit; }
+  textarea { min-height: 70px; resize: vertical; }
+  input[readonly] { background:#f3f4f6; color:var(--mut); }
+  .row { display:flex; gap:8px; } .row > div { flex:1; min-width:0; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+  button { padding:8px 12px; border:0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; background:#e5e7eb; }
+  button.pri { background:var(--pri); color:#fff; } button.del { background:var(--red); color:#fff; }
+  button:disabled { opacity:.5; cursor:wait; }
+  #list { max-height:150px; overflow:auto; border:1px solid var(--bd); border-radius:6px; margin-top:6px; }
+  #list div { padding:6px 8px; border-bottom:1px solid #f3f4f6; cursor:pointer; display:flex; justify-content:space-between; gap:6px; }
+  #list div:hover { background:#eff6ff; } #list div.sel { background:#dbeafe; }
+  .tag { font-size:11px; color:var(--mut); white-space:nowrap; }
+  .imgs { display:flex; gap:8px; flex-wrap:wrap; }
+  .slot { flex:1; min-width:120px; border:1px dashed var(--bd); border-radius:8px; padding:8px; }
+  .slot img { width:100%; height:110px; object-fit:cover; border-radius:6px; background:#f3f4f6; display:block; margin-bottom:6px; }
+  .slot input[type=file] { padding:4px; font-size:11px; }
+  .slot .st { font-size:11px; margin-top:4px; color:var(--mut); }
+  #log { margin-top:12px; padding:8px; border-radius:6px; background:#f9fafb; border:1px solid #e5e7eb; min-height:36px; white-space:pre-wrap; font-size:12px; }
+  .ok { color:var(--grn); } .err { color:var(--red); }
+  hr { border:0; border-top:1px solid #e5e7eb; margin:14px 0; }
+</style>
+</head>
+<body>
+  <h3>🛍 Product Manager <small style="color:#9ca3af;font-weight:normal">v7</small></h3>
+
+  <label>Search product (ID or name)</label>
+  <input id="q" placeholder="e.g. P001 or Shirt" oninput="renderList()">
+  <div id="list"></div>
+
+  <hr>
+  <label>Product ID</label>
+  <input id="id" readonly placeholder="Auto-generated when you create">
+  <label>Product Name *</label><input id="name">
+  <div class="row">
+    <div><label>Gender *</label><select id="gender" onchange="fillCategories()"></select></div>
+    <div><label>Category *</label><select id="category"></select></div>
+  </div>
+  <div class="row">
+    <div><label>Price *</label><input id="price" type="number" min="0" step="0.01"></div>
+    <div><label>Old Price</label><input id="oldPrice" type="number" min="0" step="0.01"></div>
+  </div>
+  <div class="row">
+    <div><label>Purchase Price (per unit) *</label><input id="purchasePrice" type="number" min="0" step="0.01"></div>
+    <div><label>Purchased Qty *</label><input id="purchasedQty" type="number" min="0" step="1"></div>
+  </div>
+  <div class="row">
+    <div><label>Status * (Inactive = hidden from the website. Everything else can be ordered)</label><select id="status"></select></div>
+    <div><label>Sold / Remaining / Buy cost (auto)</label><input id="calc" readonly></div>
+  </div>
+    <label>Description (new lines are kept. Add "Colors: Black, Navy" and "Sizes: M, L" lines for options)</label><textarea id="description"></textarea>
+
+  <label>Images (choose a file; it uploads when you press Save)</label>
+  <div class="imgs" id="imgs"></div>
+
+  <div class="btns">
+    <button class="pri" id="saveBtn" onclick="save()">Save / Create Product</button>
+    <button onclick="newProduct()">New</button>
+    <button onclick="batch()">+ Add Stock Batch</button>
+    <button class="del" id="delBtn" onclick="removeProduct()">Delete</button>
+  </div>
+  <div id="log">Loading…</div>
+
+<script>
+  window.addEventListener('error', function (e) {
+    var l = document.getElementById('log');
+    if (l) { l.style.color = '#dc2626'; l.textContent = '✗ Script error: ' + e.message + (e.lineno ? ' (line ' + e.lineno + ')' : ''); }
+  });
+</script>
+<script>
+(function () {   // everything is wrapped so it cannot clash with Google's own page variables
+
+  let DB = { products: [], categories: [], genders: [], statuses: [] };
+  let current = null;                 // product being edited (null = new)
+  const files = { 1: null, 2: null, 3: null };
+  const $ = id => document.getElementById(id);
+
+  function call(fn, ...args) {
+    return new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args));
+  }
+  function log(msg, cls) {
+    const d = document.createElement('div'); d.className = cls || ''; d.textContent = msg; $('log').appendChild(d);
+  }
+  async function loadData() { return JSON.parse(await call('getInitData')); }
+  function clearLog() { $('log').innerHTML = ''; }
+  function busy(b) { $('saveBtn').disabled = b; $('delBtn').disabled = b; }
+
+  // ---------- init ----------
+  window.onerror = function (m) { $('log').innerHTML = ''; log('✗ Script error: ' + m, 'err'); };
+
+  (async function init() {
+    buildSlots();                                   // show image boxes immediately
+    $('gender').innerHTML = ['Male', 'Female'].map(g => `<option>${g}</option>`).join('');
+    $('status').innerHTML = ['Active', 'Inactive', 'Out of Stock'].map(s => `<option>${s}</option>`).join('');
+    clearLog(); log('Page script is running. Contacting Google server…');
+    const timer = setTimeout(() => log('✗ Google server is not answering. Fix: sign out of all other Google accounts (or use Incognito with ONE account) and allow third-party cookies for docs.google.com, then reopen.', 'err'), 10000);
+    try {
+      DB = await loadData();
+      clearTimeout(timer);
+      if (!DB) throw new Error('Server returned nothing. Run getInitData in the Apps Script editor and read the error.');
+      $('gender').innerHTML = DB.genders.map(g => `<option>${g}</option>`).join('');
+      $('status').innerHTML = DB.statuses.map(s => `<option>${s}</option>`).join('');
+      renderList(); newProduct();
+      clearLog(); log('Ready. ' + DB.products.length + ' products loaded.');
+    } catch (e) { clearTimeout(timer); $('log').innerHTML = ''; log('✗ ' + (e && e.message ? e.message : e), 'err'); }
+  })();
+
+  function buildSlots() {
+    $('imgs').innerHTML = [1, 2, 3].map(n => `
+      <div class="slot">
+        <img id="prev${n}" alt="">
+        <b>Image ${n}</b>
+        <input type="file" accept="image/*" onchange="pick(${n}, this)">
+        <div class="st" id="st${n}"></div>
+      </div>`).join('');
+  }
+
+  // ---------- list / search ----------
+  function esc(s) { return String(s == null ? '' : s).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;'); }
+  function renderList() {
+    const q = $('q').value.trim().toLowerCase();
+    const items = DB.products.filter(p => !q || p.id.toLowerCase().includes(q) || String(p.productName).toLowerCase().includes(q));
+    $('list').innerHTML = items.length ? items.map(p =>
+      `<div class="${current && current.id === p.id ? 'sel' : ''}" onclick="selectProduct('${esc(p.id)}')">
+         <span><b>${esc(p.id)}</b> ${esc(p.productName)}</span><span class="tag">${esc(p.gender)} · ${esc(p.status)} · left ${p.stock}</span></div>`).join('')
+      : '<div style="cursor:default">No products found</div>';
+  }
+  function selectProduct(id) { loadForm(DB.products.filter(p => p.id === id)[0]); renderList(); }
+
+  // ---------- form ----------
+  function fillCategories(selected) {
+    const g = $('gender').value;
+    let cats = DB.categories.filter(c => c.gender === g).map(c => c.category);
+    if (selected && cats.indexOf(selected) < 0) cats.push(selected);   // keep old/inactive category visible
+    $('category').innerHTML = cats.map(c => `<option>${esc(c)}</option>`).join('');
+    if (selected) $('category').value = selected;
+  }
+  function loadForm(p) {
+    current = p || null;
+    [1, 2, 3].forEach(n => { files[n] = null; });
+    $('id').value = p ? p.id : '';
+    $('name').value = p ? p.productName : '';
+    $('gender').value = p ? p.gender : DB.genders[0];
+    fillCategories(p ? p.category : null);
+    $('price').value = p ? p.price : '';
+    $('oldPrice').value = p && p.oldPrice ? p.oldPrice : '';
+    $('purchasePrice').value = p ? p.purchasePrice : '';
+    $('purchasedQty').value = p ? p.purchasedQty : '';
+    $('calc').value = p ? ('Sold ' + p.soldQty + ' / Left ' + p.stock + ' / Cost ' + p.totalBuyCost) : 'Calculated after save';
+    $('status').value = p ? p.status : 'Active';
+    $('description').value = p ? p.description : '';
+    [1, 2, 3].forEach(n => {
+      const url = p ? p.images[n - 1] : '';
+      $('prev' + n).src = url || ''; $('prev' + n).style.visibility = url ? 'visible' : 'hidden';
+      $('st' + n).textContent = url ? 'Image saved ✓' : 'No image yet';
+    });
+    document.querySelectorAll('.slot input[type=file]').forEach(i => i.value = '');
+    $('delBtn').style.display = p ? '' : 'none';
+  }
+  function newProduct() { loadForm(null); renderList(); }
+  // same product name, new purchase (new price/qty). The website uses the NEWEST (bottom-most) Active row's price.
+  function batch() {
+    if (!current) { clearLog(); log('✗ Select a product first, then press Add Stock Batch.', 'err'); return; }
+    const keep = current;
+    loadForm(null);
+    $('name').value = keep.productName; $('gender').value = keep.gender; fillCategories(keep.category);
+    $('price').value = keep.price; $('oldPrice').value = keep.oldPrice || ''; $('description').value = keep.description;
+    $('status').value = 'Active'; $('purchasePrice').value = ''; $('purchasedQty').value = '';
+    clearLog(); log('New stock batch of "' + keep.productName + '". Enter the NEW purchase price and quantity, then Save. Keep the name exactly the same.');
+  }
+
+  function pick(n, input) {
+    const f = input.files[0]; if (!f) { files[n] = null; return; }
+    if (String(f.type).indexOf('image/') !== 0) { log('✗ Please choose an image file.', 'err'); input.value = ''; return; }
+    files[n] = f;
+    const r = new FileReader();
+    r.onload = e => { $('prev' + n).src = e.target.result; $('prev' + n).style.visibility = 'visible'; };
+    r.readAsDataURL(f);
+    $('st' + n).textContent = 'New file selected – will upload on Save';
+  }
+
+  // shrink image in the browser (max 1400px, JPEG) so uploads are fast and Drive stays small
+  function toJpegBase64(file) {
+    return new Promise((res, rej) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const max = 1400, s = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      };
+      img.onerror = () => rej(new Error('Could not read the image.'));
+      img.src = url;
+    });
+  }
+
+  // ---------- save (create or update) + uploads ----------
+  async function save() {
+    clearLog();
+    // confirm replacement of existing images BEFORE doing anything
+    for (const n of [1, 2, 3]) {
+      if (files[n] && current && current.images[n - 1]) {
+        if (!confirm('Image ' + n + ' already exists. Replace it with the new file?')) {
+          files[n] = null; $('st' + n).textContent = 'Replace cancelled'; log('Image ' + n + ': replace cancelled, old image kept.');
+        }
+      }
+    }
+    const payload = {
+      id: $('id').value, productName: $('name').value, gender: $('gender').value, category: $('category').value,
+      price: $('price').value, oldPrice: $('oldPrice').value, purchasePrice: $('purchasePrice').value, purchasedQty: $('purchasedQty').value,
+      status: $('status').value, description: $('description').value
+    };
+    busy(true);
+    try {
+      log('Saving product…');
+      const res = await call('saveProduct', payload);
+      const id = res.product.id;
+      log('✓ Product ' + (res.isNew ? 'created: ' : 'updated: ') + id + ' (Products!A' + res.row + ')', 'ok');
+      for (const n of [1, 2, 3]) {
+        if (!files[n]) continue;
+        log('Uploading Image ' + n + '…');
+        const b64 = await toJpegBase64(files[n]);
+        const r = await call('uploadImage', id, n, files[n].name, 'image/jpeg', b64, true);
+        log('✓ Image ' + n + ' uploaded', 'ok'); log('✓ Google Drive saved', 'ok'); log('✓ Image URL added to ' + r.cell, 'ok');
+      }
+      DB = await loadData();
+      loadForm(DB.products.filter(p => p.id === id)[0]); renderList();
+    } catch (e) { log('✗ ' + (e.message || e), 'err'); }
+    busy(false);
+  }
+
+  async function removeProduct() {
+    if (!current) return;
+    if (!confirm('Delete ' + current.id + ' – ' + current.productName + '?  This removes the row from the Products sheet and cannot be undone.')) return;
+    clearLog(); busy(true);
+    try {
+      await call('deleteProduct', current.id);
+      log('✓ Deleted ' + current.id, 'ok');
+      DB = await loadData(); newProduct();
+    } catch (e) { log('✗ ' + (e.message || e), 'err'); }
+    busy(false);
+  }
+
+  // inline onclick/oninput handlers need these on window
+  window.renderList = renderList; window.fillCategories = fillCategories; window.selectProduct = selectProduct;
+  window.pick = pick; window.save = save; window.newProduct = newProduct; window.batch = batch; window.removeProduct = removeProduct;
+})();
+</script>
+</body>
+</html>

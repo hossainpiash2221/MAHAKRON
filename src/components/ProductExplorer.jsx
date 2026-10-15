@@ -2,7 +2,8 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense , useEffect, useMemo, useState } from "react";
+
 import {
   usePathname,
   useRouter,
@@ -21,7 +22,7 @@ const chip = (on) =>
       : "border-ink/20 bg-white hover:border-ink/50"
   }`;
 
-export default function ProductExplorer() {
+function ProductExplorerContent()  {
   const { products, status } = useProducts();
 
   // URL is the single source of truth
@@ -507,5 +508,12 @@ export default function ProductExplorer() {
         </div>
       </div>
     </div>
+  );
+}
+export default function ProductExplorer() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <ProductExplorerContent />
+    </Suspense>
   );
 }

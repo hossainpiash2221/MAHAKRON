@@ -74,3 +74,39 @@
 .Toastify__progress-bar--success {
   background: #ffffff !important;
 }
+
+
+
+
+@keyframes zunirah-fly-to-bag {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    border-radius: 8px;
+  }
+
+  65% {
+    opacity: 0.9;
+  }
+
+  100% {
+    transform:
+      translate(
+        calc(-50% + var(--fly-x)),
+        calc(-50% + var(--fly-y))
+      )
+      scale(0.12);
+    opacity: 0;
+    border-radius: 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-fly-card {
+    transition: none !important;
+  }
+
+  .product-fly-card img {
+    transition: none !important;
+  }
+}

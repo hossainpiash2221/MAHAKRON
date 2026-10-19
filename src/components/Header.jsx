@@ -308,6 +308,7 @@ export default function Header() {
             <Link
               id="cart-target"
               href="/cart"
+              data-shopping-bag-target
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-[5px] bg-pink px-3 py-2 text-white transition-all duration-300 hover:shadow-md"
             >
               <span className="absolute bottom-0 left-0 h-3 w-3 scale-0 rounded-full bg-dark_green transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[35]" />

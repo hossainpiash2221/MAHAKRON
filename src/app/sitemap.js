@@ -12,3 +12,6 @@ export default async function sitemap() {
     ...products.map((p) => ({ url: `${SITE.url}/products/${p.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 })),
   ];
 }
+
+
+

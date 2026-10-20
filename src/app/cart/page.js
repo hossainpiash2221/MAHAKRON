@@ -29,13 +29,13 @@ export default function CartPage() {
     return (
       <main className="flex min-h-[80vh] items-center justify-center bg-[#faf9f6] px-4 py-16">
         <div className="w-full max-w-xl text-center">
-          <div className="mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-[4px] bg-[#00350c]/[0.06]">
+          <div className="mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-[4px] bg-dark_green/[0.06]">
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.3"
-              className="h-12 w-12 text-[#00350c]"
+              className="h-12 w-12 text-dark_green"
               aria-hidden="true"
             >
               <path d="M5 8h14l1 13H4L5 8Z" />
@@ -43,11 +43,11 @@ export default function CartPage() {
             </svg>
           </div>
 
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#c80077]">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-pink">
             Your next favourite awaits
           </p>
 
-          <h1 className="font-display text-4xl font-bold uppercase tracking-tight text-[#00350c] sm:text-5xl">
+          <h1 className="font-display text-4xl font-bold uppercase tracking-tight text-dark_green sm:text-5xl">
             An empty bag,
             <br />
             a world of style.
@@ -60,7 +60,7 @@ export default function CartPage() {
 
           <Link
             href="/products"
-            className="mt-8 inline-flex min-h-12 items-center justify-center gap-3 rounded-[4px] bg-[#00350c] px-8 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#c80077]"
+            className="mt-8 inline-flex min-h-12 items-center justify-center gap-3 rounded-[4px] bg-dark_green px-8 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-pink"
           >
             EXPLORE COLLECTION
             <span aria-hidden="true">→</span>
@@ -71,18 +71,18 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[url('/bg.jpg')] bg-cover bg-center bg-fixed text-[#00350c] py-4">
+    <main className="min-h-screen bg-[url('/bg.webp')] bg-cover bg-center bg-fixed text-dark_green py-4">
       {/* Editorial header */}
-      <section className="border-b border-[#00350c]/10 bg-white">
+      <section className="border-b border-dark_green/10 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-9 sm:px-6 sm:py-14 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-[#c80077] sm:text-xs">
+              {/* <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-pink sm:text-xs">
                 ZUNIRAH / YOUR SELECTION
-              </p>
+              </p> */}
 
-              <h1 className="font-display text-4xl font-bold uppercase tracking-tight sm:text-5xl lg:text-6xl">
-                Shopping Bag<span className="text-[#c80077]">.</span>
+              <h1 className="font-display text-3xl font-bold uppercase tracking-tight sm:text-5xl lg:text-6xl">
+                Shopping Bag<span className="text-pink">.</span>
               </h1>
 
               <p className="mt-3 text-sm text-gray-500">
@@ -90,7 +90,7 @@ export default function CartPage() {
               </p>
             </div>
 
-            <div className="flex h-14 min-w-14 items-center justify-center rounded-[4px] border border-[#00350c]/15 px-4">
+            <div className="flex h-14 min-w-14 items-center justify-center rounded-[4px] border border-dark_green/15 px-4">
               <span className="text-lg font-bold tabular-nums">
                 {String(items.reduce((total, item) => total + item.qty, 0)).padStart(2, '0')}
               </span>
@@ -108,20 +108,20 @@ export default function CartPage() {
 
           {/* Products */}
           <div>
-            <div className="mb-5 flex items-center justify-between border-b border-[#00350c]/15 pb-4">
+            <div className="mb-5 flex items-center justify-between border-b border-dark_green/15 pb-4">
               <h2 className="text-xs font-bold uppercase tracking-[0.2em]">
                 Your selection
               </h2>
 
               <Link
                 href="/products"
-                className="text-xs font-semibold text-[#c80077] transition-colors hover:text-[#00350c]"
+                className="text-xs font-semibold text-pink transition-colors hover:text-dark_green"
               >
                 + Add more
               </Link>
             </div>
 
-            <ul className="divide-y divide-[#00350c]/10">
+            <ul className="divide-y divide-dark_green/10">
               {items.map((i) => (
                 <li
                   key={i.key}
@@ -143,7 +143,7 @@ export default function CartPage() {
                       <div className="min-w-0">
                         <Link
                           href={`/products/${i.slug}`}
-                          className="line-clamp-2 text-sm font-semibold leading-6 transition-colors hover:text-[#c80077] sm:text-base"
+                          className="line-clamp-2 text-sm font-semibold leading-6 transition-colors hover:text-pink sm:text-base"
                         >
                           {i.name}
                         </Link>
@@ -154,7 +154,7 @@ export default function CartPage() {
                           </p>
                         )}
 
-                        <p className="mt-2 text-sm font-semibold text-[#c80077]">
+                        <p className="mt-2 text-sm font-semibold text-pink">
                           {taka(i.price)}
                           <span className="ml-1 text-[10px] font-normal text-gray-400">
                             / item
@@ -185,7 +185,7 @@ export default function CartPage() {
                         type="button"
                         onClick={() => remove(i.key)}
                         aria-label={`Remove ${i.name} from cart`}
-                        className="text-xs text-gray-500 underline decoration-gray-300 underline-offset-4 transition-colors hover:text-[#c80077] hover:decoration-[#c80077]"
+                        className="text-xs text-gray-500 underline decoration-gray-300 underline-offset-4 transition-colors hover:text-pink hover:decoration-pink"
                       >
                         Remove
                       </button>
@@ -195,13 +195,13 @@ export default function CartPage() {
               ))}
             </ul>
 
-            <div className="mt-5 flex items-center gap-3 border-t border-[#00350c]/10 pt-5 text-xs leading-5 text-gray-500">
+            <div className="mt-5 flex items-center gap-3 border-t border-dark_green/10 pt-5 text-xs leading-5 text-gray-500">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
-                className="h-5 w-5 shrink-0 text-[#00350c]"
+                className="h-5 w-5 shrink-0 text-dark_green"
                 aria-hidden="true"
               >
                 <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" />
@@ -212,8 +212,8 @@ export default function CartPage() {
           </div>
 
           {/* Order summary */}
-          <aside className="rounded-[4px] border border-[#00350c]/10 bg-white p-5 sm:p-7 lg:sticky lg:top-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#c80077]">
+          <aside className="rounded-[4px] border border-dark_green/10 bg-white p-5 sm:p-7 lg:sticky lg:top-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-pink">
               Almost yours
             </p>
 
@@ -221,7 +221,7 @@ export default function CartPage() {
               Order Summary
             </h2>
 
-            <div className="my-6 border-t border-[#00350c]/10" />
+            <div className="my-6 border-t border-dark_green/10" />
 
             <dl className="space-y-4 text-sm">
               <div className="flex items-center justify-between gap-4">
@@ -234,7 +234,7 @@ export default function CartPage() {
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-gray-600">Delivery</dt>
                 <dd className="text-right">
-                  <span className="block text-xs font-semibold text-[#00350c]">
+                  <span className="block text-xs font-semibold text-dark_green">
                     Calculated at checkout
                   </span>
                   <span className="mt-1 block text-[11px] text-gray-500">
@@ -247,7 +247,7 @@ export default function CartPage() {
               </div>
             </dl>
 
-            <div className="my-6 border-t border-dashed border-[#00350c]/20" />
+            <div className="my-6 border-t border-dashed border-dark_green/20" />
 
             <div className="flex items-end justify-between gap-3">
               <div>
@@ -264,7 +264,7 @@ export default function CartPage() {
 
             <Link
               href="/checkout"
-              className="mt-7 flex min-h-14 w-full items-center justify-center gap-3 rounded-[4px] bg-[#c80077] px-5 py-4 text-center text-xs font-bold uppercase tracking-[0.15em] text-white transition-colors duration-200 hover:bg-[#00350c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c80077]"
+              className="mt-7 flex min-h-14 w-full items-center justify-center gap-3 rounded-[4px] bg-pink px-5 py-4 text-center text-xs font-bold uppercase tracking-[0.15em] text-white transition-colors duration-200 hover:bg-dark_green focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink"
             >
               Proceed to Checkout
               <span aria-hidden="true" className="text-base">→</span>
@@ -272,15 +272,15 @@ export default function CartPage() {
 
             <Link
               href="/products"
-              className="mt-4 flex min-h-11 items-center justify-center rounded-[4px] border border-[#00350c]/15 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors hover:border-[#00350c] hover:bg-[#00350c]/[0.04]"
+              className="mt-4 flex min-h-11 items-center justify-center rounded-[4px] border border-dark_green/15 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors hover:border-dark_green hover:bg-dark_green/[0.04]"
             >
               Continue Shopping
             </Link>
 
-            <div className="mt-6 flex items-center justify-center gap-2 border-t border-[#00350c]/10 pt-5 text-[10px] uppercase tracking-wider text-gray-500">
-              <span className="text-[#c80077]">✦</span>
+            <div className="mt-6 flex items-center justify-center gap-2 border-t border-dark_green/10 pt-5 text-[10px] uppercase tracking-wider text-gray-500">
+              <span className="text-pink">✦</span>
               Made for your everyday style
-              <span className="text-[#c80077]">✦</span>
+              <span className="text-pink">✦</span>
             </div>
           </aside>
         </div>

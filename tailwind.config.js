@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        ink: '#16211F', paper: '#F6F7F3', sand: '#E8E4D8', mist: '#DDE5E3', sky: '#e9fbff', pink: '#c80077', dark_green: '#00350c',
+        ink: '#16211F', paper: '#F6F7F3', sand: '#E8E4D8', mist: '#DDE5E3', sky: '#e9fbff', pink: '#940059', dark_green: 'black',
         peacock: { DEFAULT: '#0F5C6B', dark: '#0A4350' }, madder: '#B3374A',
       },
       fontFamily: {

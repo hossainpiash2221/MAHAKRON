@@ -23,18 +23,23 @@ export const revalidate = 120;
 //   twitter: { card: 'summary_large_image', title: SITE.name, description: SITE.description },
 // };
 
+
 export const metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  ),
+
   title: {
-    default: 'ZUNIRAH | Fashion, Clothing & Accessories in Bangladesh',
-    template: '%s | ZUNIRAH',
+    default: 'MAHAKRON | Fashion, Clothing & Accessories in Bangladesh',
+    template: '%s | MAHAKRON',
   },
 
   description:
-    "Shop men's and women's fashion at ZUNIRAH Bangladesh. Explore sarees, three-piece sets, shirts, T-shirts, jackets, pants, watches, shoes, wallets, bracelets & more.",
+    "Discover men's and women's fashion, clothing, watches, shoes and accessories at MAHAKRON Bangladesh.",
 
   keywords: [
-    'ZUNIRAH',
-    'ZUNIRAH Bangladesh',
+    'MAHAKRON',
+    'MAHAKRON Bangladesh',
     'Online Shopping Bangladesh',
     'Online Fashion Store BD',
     'Men Fashion Bangladesh',
@@ -43,39 +48,37 @@ export const metadata = {
     'Three Piece Collection BD',
     'T-Shirt Bangladesh',
     'Shirt Online BD',
-    'Genji Bangladesh',
     'Jacket Bangladesh',
     'Pants Online BD',
     'Watches Bangladesh',
     'Shoes Online Bangladesh',
     'Wallet Bangladesh',
-    'Bracelets Bangladesh',
     'Fashion Accessories BD',
-    'Affordable Fashion Bangladesh',
   ],
 
-   openGraph: {
-    title: 'ZUNIRAH | Your Style, Your Statement',
+  openGraph: {
+    title: 'MAHAKRON | Your Style, Your Statement',
     description:
-      "Discover men's and women's fashion, clothing, footwear and accessories at ZUNIRAH Bangladesh.",
-    siteName: 'ZUNIRAH',
+      "Discover men's and women's fashion, watches, clothing and accessories at MAHAKRON Bangladesh.",
+    siteName: 'MAHAKRON',
     locale: 'en_BD',
     type: 'website',
     images: [
       {
-        url: '/logoFooter.webp',
+        url: '/mahakron-white.webp',
         width: 1200,
         height: 630,
-        alt: 'ZUNIRAH Fashion & Lifestyle Collection',
+        alt: 'MAHAKRON Fashion & Lifestyle Collection',
       },
     ],
   },
 
   twitter: {
     card: 'summary_large_image',
-    title: 'ZUNIRAH | Fashion & Lifestyle',
-    description: 'Explore fashion, clothing and accessories at ZUNIRAH.',
-    images: ['/logoFooter.webp'],
+    title: 'MAHAKRON | Fashion & Lifestyle',
+    description:
+      'Explore fashion, watches, clothing and accessories at MAHAKRON.',
+    images: ['/mahakron-white.webp'],
   },
 
   robots: {

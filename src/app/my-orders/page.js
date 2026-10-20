@@ -570,7 +570,7 @@ function Status({ o }) {
         </span>
 
         {o.orderId && (
-          
+
           <span className="rounded-full bg-dark_green/5 px-3 py-1.5 font-mono text-[14px] font-semibold text-dark_green/70">
             Order ID: #{o.orderId}
           </span>
@@ -581,18 +581,17 @@ function Status({ o }) {
 
   if (o.status === "failed") {
     return (
-      <div className="rounded-xl border border-red-200/80 bg-red-50/80 p-3.5">
+      <div className="w-full max-w-md rounded-xl border border-red-200/80 bg-red-50/80 p-3.5">
         <p className="flex items-center gap-2 text-xs font-bold text-red-700">
           <XCircle size={15} />
-          Order Could Not Be Processed
+          Order is not be confirmed.
         </p>
 
         <p
           role="alert"
           className="mt-1.5 break-words text-sm leading-6 text-red-700"
         >
-          {o.error ||
-            "Your order could not be processed. Please contact us."}
+          WhatsApp অথবা Call করে সরাসরি আমাদের সঙ্গে যোগাযোগ করে অর্ডারটি কনফার্ম করুন।
         </p>
       </div>
     );
@@ -620,11 +619,10 @@ function StatCard({ icon: Icon, label, value, accent = false }) {
   return (
     <div className="group flex items-center gap-3 rounded-2xl border border-dark_green/[0.06] bg-white p-4 shadow-[0_8px_30px_-20px_rgba(16,53,64,.2)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_-20px_rgba(16,53,64,.25)] sm:p-5">
       <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-          accent
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accent
             ? "bg-pink/10 text-pink"
             : "bg-dark_green/5 text-dark_green"
-        }`}
+          }`}
       >
         <Icon size={19} strokeWidth={1.8} />
       </div>

@@ -40,8 +40,8 @@ export default function Hero() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-dark_green/1 via-dark_green/1 to-transparent" aria-hidden="true" />
       <div className="mx-auto flex min-h-[78svh] max-w-7xl flex-col justify-center px-4 py-20">
         <h1 className="font-display text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl">
-          <span className="rise block">Elegance</span>
-          <span className="rise text-[#c80077] block" style={{ animationDelay: '.12s' }}>your way.</span>
+          <span className="rise block">Discover Your Style </span>
+          <span className="rise text-pink block" style={{ animationDelay: '.12s' }}> With MAHAKRON.</span>
           {/* <span className="rise block" style={{ animationDelay: '.24s' }}>at your door.</span> */}
         </h1>
         <p className="rise mt-6 max-w-md text-lg text-white/85" style={{ animationDelay: '.4s' }}>

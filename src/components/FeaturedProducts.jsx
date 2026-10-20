@@ -143,7 +143,7 @@ function FeaturedProductsContent() {
     <div className="relative w-full bg-white pb-[60px]">
       {/* Background Image */}
       <div
-        className="absolute inset-0 bg-[url('/leaves.webp')] bg-cover bg-center bg-fixed bg-no-repeat opacity-10"
+        className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center bg-fixed bg-no-repeat opacity-10"
       />
 
       {/* Content */}

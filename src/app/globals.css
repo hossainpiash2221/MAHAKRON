@@ -61,7 +61,7 @@
 
 /* Success icon color */
 .Toastify__toast--success .Toastify__toast-icon svg {
-  fill: #c80077 !important;
+  fill: #940059 !important;
   color: white !important;
 }
 
@@ -109,4 +109,20 @@
   .product-fly-card img {
     transition: none !important;
   }
+}
+
+
+@keyframes bg-color-change {
+  0%,
+  100% {
+    background-color: #000000;
+  }
+
+  50% {
+    background-color: #00350c;
+  }
+}
+
+.animate-bg-color {
+  animation: bg-color-change 5s ease-in-out infinite;
 }

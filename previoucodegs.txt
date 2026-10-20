@@ -300,7 +300,75 @@ function nextProductId_() {
   max++; props.setProperty('LAST_PRODUCT_NO', String(max));
   return 'P' + String(max).padStart(3, '0');
 }
-function clearCache_() { try { CacheService.getScriptCache().remove('pub_products'); } catch (e) {} }
+
+// function clearCache_() { try { CacheService.getScriptCache().remove('pub_products'); } catch (e) {} }
+
+
+
+/* ===== CHUNKED PRODUCT CACHE ===== */
+
+const PUB_KEY_ = 'pub_products';
+const PUB_TTL_ = 600; // 10 minutes
+
+function cacheGetBig_(key) {
+  const c = CacheService.getScriptCache();
+  const n = Number(c.get(key + '_n'));
+
+  if (!n) return null;
+
+  const keys = [];
+  for (let i = 0; i < n; i++) {
+    keys.push(key + '_' + i);
+  }
+
+  const parts = c.getAll(keys);
+  let s = '';
+
+  for (let i = 0; i < n; i++) {
+    const p = parts[key + '_' + i];
+    if (p == null) return null;
+    s += p;
+  }
+
+  return s;
+}
+
+function cachePutBig_(key, str, ttl) {
+  const obj = {};
+  let n = 0;
+
+  for (let i = 0; i < str.length; i += 30000) {
+    obj[key + '_' + (n++)] = str.slice(i, i + 30000);
+  }
+
+  obj[key + '_n'] = String(n);
+
+  CacheService.getScriptCache().putAll(obj, ttl);
+}
+
+function cacheRemoveBig_(key) {
+  const c = CacheService.getScriptCache();
+  const n = Number(c.get(key + '_n')) || 0;
+
+  const keys = [key + '_n', key];
+
+  for (let i = 0; i < n; i++) {
+    keys.push(key + '_' + i);
+  }
+
+  c.removeAll(keys);
+}
+
+function clearCache_() {
+  try {
+    cacheRemoveBig_(PUB_KEY_);
+  } catch (e) {
+    Logger.log('Cache clear failed: ' + e.message);
+  }
+}
+
+
+
 function safe_(v) { v = String(v == null ? '' : v).trim(); return /^[=+\-@]/.test(v) ? "'" + v : v; }
 function parseDate_(s) {
   const p = String(s || '').split('-');
@@ -792,13 +860,46 @@ function publicGroups_(rows) {
   return out;
 }
 
+// function getPublicProducts_() {
+//   const cache = CacheService.getScriptCache(), hit = cache.get('pub_products');   // key cleared by clearCache_()
+//   if (hit) return JSON.parse(hit);
+//   const data = publicGroups_(readProducts_()).map(publicProduct_);
+//   try { cache.put('pub_products', JSON.stringify(data), 120); } catch (e) {}
+//   return data;
+// }
+
+
 function getPublicProducts_() {
-  const cache = CacheService.getScriptCache(), hit = cache.get('pub_products');   // key cleared by clearCache_()
-  if (hit) return JSON.parse(hit);
-  const data = publicGroups_(readProducts_()).map(publicProduct_);
-  try { cache.put('pub_products', JSON.stringify(data), 120); } catch (e) {}
+  const hit = cacheGetBig_(PUB_KEY_);
+
+  if (hit) {
+    try {
+      return JSON.parse(hit);
+    } catch (e) {
+      Logger.log('Product cache parse failed: ' + e.message);
+      clearCache_();
+    }
+  }
+
+  const data = publicGroups_(readProducts_())
+    .map(publicProduct_);
+
+  try {
+    cachePutBig_(
+      PUB_KEY_,
+      JSON.stringify(data),
+      PUB_TTL_
+    );
+  } catch (e) {
+    Logger.log('Product cache write failed: ' + e.message);
+  }
+
   return data;
 }
+
+
+
+
 
 /* ---- server-side cart validation + pricing. The browser's prices are never read. ---- */
 function quote_(d) {
@@ -838,12 +939,12 @@ function rateLimit_(key, max, ttl) {
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const c = CacheService.getScriptCache(), n = Number(c.get(key)) || 0;
-    if (n >= max) throw new Error('Too many orders in a short time. Please try again later.');
+    if (n >= max) throw new Error('অনুগ্রহ করে একাধিক বার একই order-করা থেকে বিরত থাকুন। অনুগ্রহ করে Whats app অথবা Call us Button এ চেপে আমাদের সাথে যোগাযোগ করুন .');
     c.put(key, String(n + 1), ttl);
   } finally { lock.releaseLock(); }
 }
 function md5_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, s).map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join(''); }
-const BUSY_MSG_ = 'Your order is still being processed. Please wait a few seconds, then press Place order again.';
+const BUSY_MSG_ = 'কিছু সমস্যার কারণে আপনার Order- টি Confirmed হয়নি। অনুগ্রহ করে Whatsapp অথবা Call us Button-এ চেপে আমাদের সাথে যোগাযোগ করুন';
 
 /** Website checkout. Idempotent: the same requestId (or the same phone + items within 2 minutes) never creates a second order. */
 function placeWebsiteOrder_(b) {
@@ -851,9 +952,9 @@ function placeWebsiteOrder_(b) {
   if (!/^[A-Za-z0-9-]{16,64}$/.test(rid)) throw new Error('Invalid request.');
   if (b.website) throw new Error('Request rejected.');                                  // honeypot
   const phone = String(b.phone || '').trim().replace(/[\s-]/g, '');
-  if (!/^(?:\+?88)?01[3-9]\d{8}$/.test(phone)) throw new Error('Phone is required: enter a valid 11-digit mobile number.');
+  if (!/^(?:\+?88)?01[3-9]\d{8}$/.test(phone)) throw new Error('অনুগ্রহ করে Phone Number দিন');
   const phone10 = phone.slice(-10);
-  if (b.zone !== 'inside' && b.zone !== 'outside') throw new Error('Please choose your delivery area (Inside Dhaka or Outside Dhaka).');
+  if (b.zone !== 'inside' && b.zone !== 'outside') throw new Error('অনুগ্রহ করে Delivery ঠিকানা Select করুন। (Inside Dhaka or Outside Dhaka).');
   const dc = Number(b.deliveryCharge), fa = Number(b.freeAbove) || 0;
   if (!(dc >= 0 && dc <= 1000) || !(fa >= 0)) throw new Error('Invalid delivery charge.');
 
@@ -926,6 +1027,20 @@ function generateToken() {
   Logger.log(Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, ''));
 }
 
+
+function checkProductCache() {
+  clearCache_();
+  let t = Date.now(); const data = getPublicProducts_(); const cold = Date.now() - t;
+  const json = JSON.stringify(data), bytes = Utilities.newBlob(json).getBytes().length;
+  t = Date.now(); getPublicProducts_(); const warm = Date.now() - t;
+  const cached = cacheGetBig_(PUB_KEY_) !== null;
+  Logger.log('Products: ' + data.length + ' | list size: ' + Math.round(bytes / 1024) + ' KB' + (bytes > 100 * 1024 ? ' (over 100 KB: the OLD cache could never hold this)' : ''));
+  Logger.log('Cold read from the sheet: ' + cold + ' ms | cached read: ' + warm + ' ms | cache working: ' + (cached ? 'YES' : 'NO'));
+}
+function generateToken() {
+  Logger.log(Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, ''));
+}
+ 
 
 /* ================== 10. STEADFAST COURIER ================== */
 const SF_BASE = 'https://portal.packzy.com/api/v1';

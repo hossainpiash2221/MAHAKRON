@@ -30,7 +30,7 @@ export default function Hero() {
           aria-hidden="true"
         >
           <source
-            src="/hero2.mp4"
+            src="https://res.cloudinary.com/zldtykvk/video/upload/v1792524969/hero2.mp4"
             type="video/mp4"
             onError={() => setVideo(false)}
           />

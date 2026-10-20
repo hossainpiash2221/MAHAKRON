@@ -1,0 +1,5 @@
+[build.environment]
+  # These NEXT_PUBLIC_ values are intentionally inlined into the client bundle by Next.js.
+  # Exempt only these two keys from secrets scanning; all other secrets (API_SECRET,
+  # TELEGRAM_BOT_TOKEN, etc.) are still scanned.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL,NEXT_PUBLIC_STORE_NAME"

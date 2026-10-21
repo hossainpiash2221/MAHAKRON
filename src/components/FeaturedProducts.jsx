@@ -153,13 +153,13 @@ function FeaturedProductsContent() {
       >
         {/* Heading */}
         <div className="mb-8 flex items-end justify-between">
-          <h2 className="text-xl font-display font-bold tracking-tight md:text-3xl">
+          <h2 className="text-md font-display font-bold tracking-tight md:text-3xl">
             NEW COLLECTIONS
           </h2>
 
           <Link
             href="/products"
-            className="text-md font-medium underline underline-offset-4 transition-all duration-300 ease-in-out hover:text-pink lg:text-lg"
+            className="text-sm font-medium underline underline-offset-4 transition-all duration-300 md:text-md ease-in-out hover:text-pink lg:text-lg"
           >
             VIEW ALL PRODUCTS
           </Link>

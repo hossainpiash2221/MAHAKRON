@@ -169,7 +169,7 @@ function FeaturedProductsContent() {
         {status === 'loading' ? (
           <Loader />
         ) : list.length ? (
-          <ProductGrid products={list} />
+          <ProductGrid products={list} gender="male" />
         ) : (
           <p className="rounded bg-sand/60 p-6">
             {status === 'error'

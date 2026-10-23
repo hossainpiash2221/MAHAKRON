@@ -22,7 +22,7 @@ export default function Home() {
       <CategoryRow></CategoryRow>
       <FeaturedProducts />
          {/* <HeroProductSlider category="Batik" /> */}
-         <GenderProductSlider gender="Female" />
+         <GenderProductSlider gender="male" />
          
 
       <section className="mx-auto max-w-6xl px-4 pt-20 pb-20" aria-labelledby="how">

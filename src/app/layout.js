@@ -1,3 +1,4 @@
+
 import './globals.css';
 import { Bricolage_Grotesque, Figtree } from 'next/font/google';
 import { SITE } from '@/lib/site';
@@ -6,23 +7,24 @@ import ProductsProvider from '@/components/ProductsProvider';
 import CartProvider from '@/components/CartProvider';
 import OrdersProvider from '@/components/OrdersProvider';
 import Header from '@/components/Header';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import TopLoader from '@/components/TopLoader';
 import Footer from '@/components/Footer';
 import { ToastContainer, Bounce } from 'react-toastify';
 
-const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
-const body = Figtree({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
+const display = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const body = Figtree({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+});
 
 export const revalidate = 120;
-
-// export const metadata = {
-//   metadataBase: new URL(SITE.url),
-//   title: { default: `${SITE.name} | Three-piece & fashion, delivered across Bangladesh`, template: `%s | ${SITE.name}` },
-//   description: SITE.description,
-//   openGraph: { type: 'website', siteName: SITE.name, title: SITE.name, description: SITE.description, url: SITE.url, locale: 'en_BD' },
-//   twitter: { card: 'summary_large_image', title: SITE.name, description: SITE.description },
-// };
-
 
 export const metadata = {
   metadataBase: new URL(
@@ -93,27 +95,57 @@ export const metadata = {
   },
 };
 
-export const viewport = { themeColor: '#0F5C6B' };
+export const viewport = {
+  themeColor: '#0F5C6B',
+};
 
 export default async function RootLayout({ children }) {
-  // Served from Next's 2-minute cache, so this normally costs nothing. Only the first request after a cold start waits on Apps Script.
+  // Products are served from the existing server-side cache.
   const products = await getProducts();
+
   const ld = {
-    '@context': 'https://schema.org', '@graph': [
-      { '@type': 'Organization', name: SITE.name, url: SITE.url },
-      { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        name: SITE.name,
+        url: SITE.url,
+      },
+      {
+        '@type': 'WebSite',
+        name: SITE.name,
+        url: SITE.url,
+      },
     ],
   };
+
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} bg-white text-white`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${display.variable} ${body.variable} bg-white text-white`}
+      suppressHydrationWarning
+    >
       <body suppressHydrationWarning>
-        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2">Skip to content</a>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2"
+        >
+          Skip to content
+        </a>
+
         <ProductsProvider initial={products}>
           <CartProvider>
             <OrdersProvider>
               <TopLoader />
+
               <Header />
-              <main id="main"  className="bg-white bg-[url('/bg.webp')] bg-cover bg-center bg-fixed" >{children}
+
+              <main
+                id="main"
+                className="bg-white bg-[url('/bg.webp')] bg-cover bg-center bg-fixed"
+              >
+                {children}
+
                 <ToastContainer
                   position="bottom-right"
                   autoClose={2500}
@@ -126,13 +158,24 @@ export default async function RootLayout({ children }) {
                   transition={Bounce}
                   toastClassName="rounded-lg border border-pink bg-pink text-sm font-medium text-white shadow-xl shadow-pink"
                   progressClassName="!bg-white"
-                    />
+                />
               </main>
+
               <Footer />
+
+              {/* Shared navigation for mobile screens */}
+              <MobileBottomNav />
+
             </OrdersProvider>
           </CartProvider>
         </ProductsProvider>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, '\\u003c') }} />
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(ld).replace(/</g, '\\u003c'),
+          }}
+        />
       </body>
     </html>
   );

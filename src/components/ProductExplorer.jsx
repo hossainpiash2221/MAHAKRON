@@ -16,10 +16,10 @@ import Loader from "./Loader";
 const PRODUCTS_PER_PAGE = 24;
 
 const chip = (on) =>
-  `rounded-[4px] border px-4 py-1.5 text-sm font-medium transition-colors ${
+  `rounded-md border px-4 py-2 text-sm font-medium transition-all duration-200 ${
     on
-      ? "border-dark_green bg-dark_green text-white"
-      : "border-ink/20 bg-white hover:border-ink/50"
+      ? "border-dark_green bg-dark_green text-white shadow-sm"
+      : "border-ink/10 bg-white text-ink hover:border-dark_green/40 hover:bg-dark_green/5"
   }`;
 
 function ProductExplorerContent()  {
@@ -35,6 +35,7 @@ function ProductExplorerContent()  {
     g === "Male" || g === "Female" ? g : "All";
 
   const cat = sp.get("category") || "All";
+  const subcat = sp.get("subcategory") || "All";
 
   // Header search query
   const urlSearch = sp.get("search") || "";
@@ -42,6 +43,9 @@ function ProductExplorerContent()  {
   // Existing local search and sort
   const [q, setQ] = useState(urlSearch);
   const [sort, setSort] = useState("new");
+
+  // FAQ-style expansion is independent of the selected product filter.
+  const [expandedCategory, setExpandedCategory] = useState(null);
 
   // View More
   const [visibleCount, setVisibleCount] = useState(
@@ -99,6 +103,96 @@ function ProductExplorerContent()  {
     [products, gender]
   );
 
+  // All subcategories per main category, so arrows are visible even before selection.
+  const subcategoriesByCategory = useMemo(() => {
+    const groups = new Map();
+    products.forEach((p) => {
+      if (gender !== "All" && p.gender !== gender) return;
+      const category = String(p.category || "").trim();
+      const subcategory = String(p.subcategory || "").trim();
+      if (!category || !subcategory) return;
+      if (!groups.has(category)) groups.set(category, new Set());
+      groups.get(category).add(subcategory);
+    });
+    return groups;
+  }, [products, gender]);
+
+  function chooseCategory(category) {
+    if (category === "All") {
+      setExpandedCategory(null);
+      setFilter({ category: "All", subcategory: "All" });
+      return;
+    }
+    const hasChildren = (subcategoriesByCategory.get(category)?.size || 0) > 0;
+    if (hasChildren) {
+      setExpandedCategory((previous) => previous === category ? null : category);
+    } else {
+      setExpandedCategory(null);
+    }
+    // Clicking the selected category again collapses it, without clearing its filter.
+    setFilter({ category, subcategory: cat === category ? subcat : "All" });
+  }
+
+  function chooseGender(value) {
+    setExpandedCategory(null);
+    setFilter({ gender: value, category: "All", subcategory: "All" });
+  }
+
+  const filterRow = (active) =>
+    `flex w-full items-center justify-between gap-3 rounded-md px-3.5 py-3 text-left text-sm transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dark_green ${
+      active
+        ? "bg-dark_green font-semibold text-white shadow-sm"
+        : "text-ink/80 hover:bg-dark_green/5 hover:text-dark_green"
+    }`;
+
+  function categoryList() {
+    return cats.map((category) => {
+      const subs = [...(subcategoriesByCategory.get(category) || [])];
+      const hasChildren = category !== "All" && subs.length > 0;
+      const expanded = hasChildren && expandedCategory === category;
+      const active = cat === category;
+      return (
+        <div key={category}>
+          <button
+            type="button"
+            aria-pressed={active}
+            aria-expanded={hasChildren ? expanded : undefined}
+            onClick={() => chooseCategory(category)}
+            className={filterRow(active)}
+          >
+            <span>{category}</span>
+            {hasChildren && (
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                className={`h-4 w-4 shrink-0 transition-transform duration-300 ease-in-out ${expanded ? "rotate-180" : "rotate-0"}`}>
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            )}
+          </button>
+          {hasChildren && (
+            <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+              <div className="min-h-0 overflow-hidden">
+                <div className="ml-3 mt-2 mb-2 space-y-1 border-l border-dark_green/25 pl-3"
+                  role="group" aria-label={`${category} subcategories`}>
+                  {["All", ...subs].map((sub) => {
+                    const selected = active && subcat === sub;
+                    return (
+                      <button key={sub} type="button" aria-pressed={selected}
+                        onClick={() => setFilter({ category, subcategory: sub })}
+                        className={filterRow(selected)}>
+                        <span>{sub === "All" ? `All ${category}` : sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    });
+  }
+
   // Filtered and sorted products
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -109,6 +203,8 @@ function ProductExplorerContent()  {
           p.gender === gender) &&
         (cat === "All" ||
           p.category === cat) &&
+        (subcat === "All" ||
+          p.subcategory === subcat) &&
         (!s ||
           String(
             p.productName ||
@@ -119,6 +215,9 @@ function ProductExplorerContent()  {
             .toLowerCase()
             .includes(s) ||
           String(p.category || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(p.subcategory || "")
             .toLowerCase()
             .includes(s))
     );
@@ -143,12 +242,12 @@ function ProductExplorerContent()  {
         (p) => p.status === "Out of Stock"
       ),
     ];
-  }, [products, gender, cat, q, sort]);
+  }, [products, gender, cat, subcat, q, sort]);
 
   // Reset View More when filters/search/sort change
   useEffect(() => {
     setVisibleCount(PRODUCTS_PER_PAGE);
-  }, [gender, cat, q, sort]);
+  }, [gender, cat, subcat, q, sort]);
 
   // Only render currently visible products
   const visibleProducts = useMemo(
@@ -172,12 +271,12 @@ function ProductExplorerContent()  {
   }
 
   return (
-    <div className="mt-7 w-full max-w-full">
+    <div className="mt-0 w-full max-w-full pb-24 lg:mt-7 lg:pb-0">
       <div className="w-full max-w-full px-0 sm:px-6 md:px-4 lg:px-8">
 
         {/* ================= HEADING ================= */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
+        <div className="hidden lg:block lg:mb-8">
+          <h1 className="text-xl font-bold tracking-tight sm:text-4xl">
             EXPLORE OUR COLLECTION
           </h1>
 
@@ -186,185 +285,29 @@ function ProductExplorerContent()  {
           </p>
         </div>
 
-        {/* ================= MOBILE FILTER AREA ================= */}
-        <div className="mb-8 space-y-4 lg:hidden">
-
-          {/* Gender */}
-          <div
-            className="flex flex-wrap gap-2"
-            role="group"
-            aria-label="Filter by gender"
-          >
-            {genders.map((gd) => (
-              <button
-                key={gd}
-                type="button"
-                aria-pressed={gender === gd}
-                className={chip(gender === gd)}
-                onClick={() =>
-                  setFilter({
-                    gender: gd,
-                    category: "All",
-                  })
-                }
-              >
-                {gd}
-              </button>
-            ))}
-          </div>
-
-          {/* Category */}
-          <div
-            className="flex flex-wrap gap-2"
-            role="group"
-            aria-label="Filter by category"
-          >
-            {cats.map((c) => (
-              <button
-                key={c}
-                type="button"
-                aria-pressed={cat === c}
-                className={chip(cat === c)}
-                onClick={() =>
-                  setFilter({
-                    category: c,
-                  })
-                }
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          {/* Search + Sort */}
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
-
-            <label
-              className="sr-only"
-              htmlFor="mobile-q"
-            >
-              Search products
-            </label>
-
-            <input
-              id="mobile-q"
-              type="search"
-              value={q}
-              onChange={(e) =>
-                setQ(e.target.value)
-              }
-              placeholder="Search products"
-              className="w-full min-w-0 rounded-[4px] border border-ink/20 bg-white px-3 py-2.5 outline-none transition-colors focus:border-ink/50"
-            />
-
-            <label
-              className="sr-only"
-              htmlFor="mobile-sort"
-            >
-              Sort
-            </label>
-
-            <select
-              id="mobile-sort"
-              value={sort}
-              onChange={(e) =>
-                setSort(e.target.value)
-              }
-              className="w-full shrink-0 rounded-[4px] border border-ink/20 bg-white px-3 py-2.5 outline-none sm:w-auto"
-            >
-              <option value="new">
-                Newest first
-              </option>
-              <option value="low">
-                Price: low to high
-              </option>
-              <option value="high">
-                Price: high to low
-              </option>
-            </select>
-          </div>
-        </div>
+        {/* Mobile filters are handled by the shared MobileBottomNav category drawer.
+            Show products immediately; keep desktop filters unchanged. */}
 
         {/* ================= DESKTOP LAYOUT ================= */}
         <div className="flex w-full max-w-full flex-col gap-8 lg:flex-row">
 
           {/* ================= SIDEBAR ================= */}
           <aside className="hidden w-[280px] shrink-0 lg:block xl:w-[300px]">
-            <div className="sticky top-[100px] border border-ink/10 bg-white">
+            <div className="sticky top-[100px] overflow-hidden rounded-lg border border-ink/10 bg-white shadow-sm">
 
-              {/* Gender */}
+              {/* Premium desktop filters */}
               <div className="border-b border-ink/10 p-5">
-                <h3 className="mb-4 text-base font-semibold">
-                  Gender
-                </h3>
-
-                <div className="space-y-2">
+                <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-dark_green">Gender</h3>
+                <div className="space-y-1">
                   {genders.map((gd) => (
-                    <button
-                      key={gd}
-                      type="button"
-                      aria-pressed={gender === gd}
-                      onClick={() =>
-                        setFilter({
-                          gender: gd,
-                          category: "All",
-                        })
-                      }
-                      className={`flex w-full items-center justify-between rounded-[4px] px-2 py-2 text-left text-sm transition-colors ${
-                        gender === gd
-                          ? "bg-dark_green/10 font-medium text-dark_green"
-                          : "hover:bg-ink/5"
-                      }`}
-                    >
-                      <span>{gd}</span>
-
-                      <span
-                        className={`h-4 w-4 rounded-full border ${
-                          gender === gd
-                            ? "border-dark_green bg-dark_green"
-                            : "border-ink/20"
-                        }`}
-                      />
-                    </button>
+                    <button key={gd} type="button" aria-pressed={gender === gd}
+                      onClick={() => chooseGender(gd)} className={filterRow(gender === gd)}>{gd}</button>
                   ))}
                 </div>
               </div>
-
-              {/* Categories */}
               <div className="border-b border-ink/10 p-5">
-                <h3 className="mb-4 text-base font-semibold">
-                  Categories
-                </h3>
-
-                <div className="space-y-2">
-                  {cats.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      aria-pressed={cat === c}
-                      onClick={() =>
-                        setFilter({
-                          category: c,
-                        })
-                      }
-                      className={`flex w-full items-center justify-between rounded-[4px] px-2 py-2 text-left text-sm transition-colors ${
-                        cat === c
-                          ? "bg-dark_green/10 font-medium text-dark_green"
-                          : "hover:bg-ink/5"
-                      }`}
-                    >
-                      <span>{c}</span>
-
-                      <span
-                        className={`h-4 w-4 rounded-full border ${
-                          cat === c
-                            ? "border-dark_green bg-dark_green"
-                            : "border-ink/20"
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
+                <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-dark_green">Categories</h3>
+                <div className="space-y-1">{categoryList()}</div>
               </div>
 
               {/* Search */}
@@ -394,10 +337,10 @@ function ProductExplorerContent()  {
           <main className="min-w-0 flex-1">
 
             {/* Product Header */}
-            <div className="mb-6 flex flex-col gap-4 border-b border-ink/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-3 flex flex-col gap-4 border-b border-ink/10 pb-3 sm:flex-row sm:items-center sm:justify-between lg:mb-6 lg:pb-5">
 
               <div>
-                <h2 className="text-xl font-semibold capitalize">
+                <h2 className="text-base font-semibold capitalize lg:text-xl">
                   {q.trim() || "All Products"}
                 </h2>
 

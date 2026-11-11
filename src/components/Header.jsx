@@ -24,6 +24,7 @@ export default function Header() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef(null);
 
   // Rotate between MAHAKRON and ZUNIRAH logos every 5 seconds.
   const logos = ["/mahakron.webp", "/zunirah.webp"];
@@ -60,23 +61,24 @@ export default function Header() {
     ];
   }, [products]);
 
-  // Live search
+  // Search across product name, code, category, subcategory and description.
   const searchResults = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-
+    const query = searchQuery.trim().toLocaleLowerCase();
     if (!query) return [];
 
-    return products
-      .filter((product) => {
-        const name = String(
-          product.name || product.title || product.productName || "",
-        ).toLowerCase();
-
-        const category = String(product.category || "").toLowerCase();
-
-        return name.includes(query) || category.includes(query);
-      })
-      .slice(0, 6);
+    return products.filter((product) => {
+      const fields = [
+        product.productName, product.name, product.title,
+        product.productCode, product.product_code, product.code,
+        product.sku, product.SKU, product.id,
+        product.category, product.subcategory, product.subCategory,
+        product.description, product.productDescription,
+        product.shortDescription, product.details,
+      ];
+      return fields.some((value) =>
+        String(value ?? "").toLocaleLowerCase().includes(query)
+      );
+    }).slice(0, 6);
   }, [products, searchQuery]);
 
   // Responsive marquee
@@ -137,6 +139,13 @@ export default function Header() {
   const closeMenus = () => {
     setCategoryOpen(false);
     setMenuOpen(false);
+  };
+
+  const openSearch = () => {
+    setSearchFocused(true);
+    setMenuOpen(false);
+    setCategoryOpen(false);
+    requestAnimationFrame(() => searchInputRef.current?.focus());
   };
 
   const closeSearch = () => {
@@ -217,7 +226,7 @@ export default function Header() {
         {/* ================= MAIN HEADER ================= */}
         <div className="relative mx-auto flex h-16 w-full max-w-8xl items-center justify-between px-3 sm:px-4 md:h-[68px] lg:px-6">
           {/* ================= LEFT NAV DESKTOP ================= */}
-          <div className="hidden items-center gap-3 lg:flex lg:gap-5 xl:gap-6">
+          <div className={`hidden items-center gap-3 transition-all duration-300 lg:flex lg:gap-5 xl:gap-6 ${searchFocused ? "pointer-events-none opacity-0 -translate-x-3" : "opacity-100 translate-x-0"}`}>
             <Link
               href="/"
               className="relative text-sm font-medium after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-pink after:transition-all after:duration-300 hover:after:w-full"
@@ -279,7 +288,7 @@ export default function Header() {
           {/* ================= CENTER LOGO ================= */}
           <Link
             href="/"
-            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 shrink-0 sm:left-4 lg:left-1/2 lg:-translate-x-1/2"
+            className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 shrink-0 transition-all duration-300 sm:left-4 lg:left-1/2 lg:-translate-x-1/2 ${searchFocused ? "pointer-events-none opacity-0 scale-95" : "opacity-100 scale-100"}`}
             onClick={closeMenus}
           >
             <img
@@ -295,18 +304,26 @@ export default function Header() {
           {/* ================= DESKTOP RIGHT ================= */}
           <nav
             aria-label="Main navigation"
-            className="hidden items-center gap-4 text-sm font-medium lg:flex xl:gap-6"
+            className="relative z-20 hidden items-center gap-4 text-sm font-medium lg:flex xl:gap-6"
           >
+            <button
+              type="button"
+              aria-label="Search products"
+              onClick={openSearch}
+              className={`flex h-9 w-9 items-center justify-center rounded-full text-dark_green transition-all duration-300 hover:bg-dark_green/10 ${searchFocused ? "pointer-events-none opacity-0" : ""}`}
+            >
+              <FiSearch size={20} />
+            </button>
             <Link
               href="/products?gender=Male"
-              className="relative text-xs font-semibold tracking-wide transition-colors duration-300 hover:text-pink sm:text-sm after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-pink after:transition-all after:duration-300 hover:after:w-full"
+              className={`relative text-xs font-semibold tracking-wide transition-colors duration-300 hover:text-pink sm:text-sm after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-pink after:transition-all after:duration-300 hover:after:w-full ${searchFocused ? "pointer-events-none opacity-0" : "opacity-100"}`}
             >
               MALE
             </Link>
 
             <Link
               href="/products?gender=Female"
-              className="relative text-xs font-semibold tracking-wide transition-colors duration-300 hover:text-pink sm:text-sm after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-pink after:transition-all after:duration-300 hover:after:w-full"
+              className={`relative text-xs font-semibold tracking-wide transition-colors duration-300 hover:text-pink sm:text-sm after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-pink after:transition-all after:duration-300 hover:after:w-full ${searchFocused ? "pointer-events-none opacity-0" : "opacity-100"}`}
             >
               FEMALE
             </Link>
@@ -333,7 +350,8 @@ export default function Header() {
           </nav>
 
           {/* ================= MOBILE + TABLET RIGHT ================= */}
-          <div className="ml-auto flex items-center gap-2 lg:hidden">
+          <div className="relative z-20 ml-auto flex items-center gap-2 lg:hidden">
+            <button type="button" onClick={openSearch} aria-label="Search products" className={`flex h-10 w-10 items-center justify-center rounded-full text-dark_green transition-all duration-300 ${searchFocused ? "pointer-events-none opacity-0 w-0 overflow-hidden" : ""}`}><FiSearch size={21} /></button>
             {/* Mobile Cart */}
             <Link
               id="cart-target-mobile"
@@ -359,7 +377,7 @@ export default function Header() {
                 setMenuOpen((open) => !open);
                 setCategoryOpen(false);
               }}
-              className="flex h-10 w-10 items-center justify-center rounded-[5px] border border-ink/10 transition-colors duration-300 hover:bg-pink hover:text-white"
+              className={`flex h-10 w-10 items-center justify-center rounded-[5px] border border-ink/10 transition-all duration-300 hover:bg-pink hover:text-white ${searchFocused ? "pointer-events-none w-0 overflow-hidden border-0 opacity-0" : ""}`}
             >
               {menuOpen ? (
                 <FiX className="text-[22px]" />
@@ -488,118 +506,69 @@ export default function Header() {
             </nav>
           </div>
         )}
-      </header>
-
-      {/* ==================================================
-          FLOATING SEARCH - COMPLETELY OUTSIDE HEADER
-          Fixed position, always centered
-      ================================================== */}
+      {/* Expanding search stays inside the navbar, leaving the shopping bag visible. */}
       <div
         ref={searchRef}
-        className={` fixed left-1/2 top-[110px] z-[100] -translate-x-1/2 transition-all duration-500 ease-out ${
-          searchFocused
-            ? "w-[calc(100%-24px)] sm:w-[min(560px,calc(100%-40px))] lg:w-[min(620px,calc(100%-48px))]"
-            : "w-[155px] sm:w-[190px] lg:w-[220px]"
-        }`}
+        className={`pointer-events-none absolute inset-x-0 top-[calc(100%-64px)] z-40 mx-auto h-16 w-full max-w-8xl px-3 transition-all duration-300 sm:px-4 md:top-[calc(100%-68px)] md:h-[68px] lg:px-6 ${searchFocused ? "opacity-100" : "opacity-0"}`}
       >
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-
-            const query = searchQuery.trim();
-            if (!query) return;
-
-            closeSearch();
-
-            window.location.href = `/products?search=${encodeURIComponent(query)}`;
-          }}
-          className={`flex h-10 items-center gap-2 rounded-md border px-3 transition-all duration-300 sm:h-11 ${
-            searchFocused
-              ? "border-white/80 bg-white/85 shadow-[0_8px_30px_rgba(16,53,64,0.16)]"
-              : "border-white/60 bg-white/85 shadow-sm hover:bg-white/55"
-          } backdrop-blur-xl`}
-        >
-          <FiSearch className="shrink-0 text-[17px] text-[#103540]" />
-
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                setSearchFocused(false);
-                event.currentTarget.blur();
-              }
-            }}
-            placeholder="Search Items..."
-            aria-label="Search products"
-            className="w-full min-w-0 bg-transparent text-sm text-[#103540] outline-none placeholder:text-[#526561]/75"
-          />
-
-          {searchQuery && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => setSearchQuery("")}
-              className="shrink-0 text-[#526561] transition-colors hover:text-pink"
+        <div className="flex h-full items-center pr-[90px] sm:pr-[100px] lg:pr-[190px]">
+          <div className={`min-w-0 origin-left transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${searchFocused ? "pointer-events-auto w-full scale-x-100" : "w-0 scale-x-95"}`}>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const query = searchQuery.trim();
+                if (!query) return;
+                closeSearch();
+                window.location.href = `/products?search=${encodeURIComponent(query)}`;
+              }}
+              className="flex h-11 items-center gap-2 rounded-xl border border-[#DCE8E3] bg-white/95 px-3 shadow-[0_3px_16px_rgba(23,61,50,0.045)] transition-[border-color,box-shadow] duration-300 focus-within:border-[#B6CDC2] focus-within:shadow-[0_5px_20px_rgba(23,61,50,0.075)]"
             >
-              <FiX size={16} />
-            </button>
-          )}
-        </form>
-
-        {/* LIVE SEARCH RESULTS */}
-        {searchFocused && searchQuery.trim() && (
-          <div className="absolute left-0 right-0 top-[calc(100%+8px)] max-h-[65vh] overflow-y-auto rounded-2xl border border-white/70 bg-white/90 shadow-[0_12px_36px_rgba(16,53,64,0.18)] backdrop-blur-2xl">
-            {searchResults.length > 0 ? (
-              <>
-                {searchResults.map((product, index) => (
-                  <Link
-                    key={product.id || product._id || index}
-                    href={
-                      product.slug
-                        ? `/products/${product.slug}`
-                        : product.id || product._id
-                          ? `/products/${product.id || product._id}`
-                          : `/products?search=${encodeURIComponent(
-                              product.name || product.title || searchQuery,
-                            )}`
-                    }
-                    onClick={closeSearch}
-                    className="block border-b border-[#103540]/5 px-4 py-3 text-sm text-dark_green transition-colors last:border-b-0 hover:bg-[#e9fbff] hover:text-pink"
-                  >
-                    <span className="block font-medium">
-                      {product.name ||
-                        product.title ||
-                        product.productName ||
-                        "Product"}
-                    </span>
-
-                    {product.category && (
-                      <span className="mt-0.5 block text-xs text-[#526561]/75">
-                        {product.category}
-                      </span>
-                    )}
-                  </Link>
-                ))}
-
-                <Link
-                  href={`/products?search=${encodeURIComponent(searchQuery.trim())}`}
-                  onClick={closeSearch}
-                  className="block bg-[#e9fbff]/70 px-4 py-3 text-center text-xs font-semibold text-pink hover:bg-[#e9fbff]"
-                >
-                  View all results →
-                </Link>
-              </>
-            ) : (
-              <p className="px-4 py-4 text-sm text-[#526561]">
-                No matching products found.
-              </p>
+              <FiSearch className="shrink-0 text-lg text-dark_green" />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") closeSearch();
+                }}
+                placeholder="Search name, code, category..."
+                aria-label="Search products"
+                className="w-full min-w-0 bg-transparent text-sm text-dark_green outline-none placeholder:text-ink/50"
+              />
+              <button type="button" aria-label="Close search" onClick={closeSearch} className="shrink-0 rounded-full p-1 text-dark_green transition-colors hover:bg-dark_green/10"><FiX size={19} /></button>
+            </form>
+            {searchFocused && searchQuery.trim() && (
+              <div className="absolute left-3 right-[102px] top-[calc(100%-2px)] max-h-[60vh] overflow-y-auto rounded-xl border border-[#E4EDE8] bg-white shadow-[0_12px_30px_rgba(23,61,50,0.09)] sm:left-4 sm:right-[116px] lg:left-6 lg:right-[214px]">
+                {searchResults.length ? (
+                  <>
+                    {searchResults.map((product, index) => (
+                      <Link
+                        key={product.id || product._id || index}
+                        href={product.slug ? `/products/${product.slug}` : `/products?search=${encodeURIComponent(product.productName || product.name || searchQuery)}`}
+                        onClick={closeSearch}
+                        className="block border-b border-[#EDF2EF] px-4 py-3 text-sm text-dark_green transition-colors last:border-0 hover:bg-dark_green/5"
+                      >
+                        <span className="block font-medium">{product.productName || product.name || product.title || "Product"}</span>
+                        {(product.productCode || product.code || product.sku || product.category || product.subcategory) && (
+                          <span className="mt-1 block text-xs text-ink/60">
+                            {[product.productCode || product.code || product.sku, product.category, product.subcategory || product.subCategory].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </Link>
+                    ))}
+                    <Link href={`/products?search=${encodeURIComponent(searchQuery.trim())}`} onClick={closeSearch} className="block px-4 py-3 text-center text-sm font-semibold text-dark_green hover:bg-dark_green/5">View all results →</Link>
+                  </>
+                ) : <p className="px-4 py-4 text-sm text-ink/60">No matching products found.</p>}
+              </div>
             )}
           </div>
-        )}
+        </div>
       </div>
+      </header>
+
+
     </>
   );
 }

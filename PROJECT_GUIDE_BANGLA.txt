@@ -1,0 +1,192 @@
+﻿MAHAKRON PROJECT GUIDE
+=====================
+Purpose: give another AI assistant enough project context to understand this repository and propose safe, focused changes.
+Last prepared: 2026-11-12
+Language: Bangla overview + exact code/file names (English).
+
+1. PROJECT AT A GLANCE
+---------------------
+This is a customer-facing fashion e-commerce storefront for MAHAKRON, built with Next.js App Router, React 19 and Tailwind CSS. Customers browse products, choose available color/size variants, add items to a browser-persisted cart, submit a cash-on-delivery order, and view order history saved in that browser.
+
+The intended server/data flow is:
+Browser pages/components -> this Next.js server (/api/* and server rendering) -> Google Apps Script web app -> Google Sheet / existing order manager -> delivery workflow.
+A Telegram bot notification can report failed orders. The browser should call this site's endpoints only; Apps Script credentials must remain server-side.
+
+Important behavior:
+- Product data is read through Apps Script and cached server-side (fresh about 2 minutes; a last good copy may be served stale for up to 24 hours). Browser provider also retains product data per visit/session and refreshes after 5 minutes.
+- Product prices and order totals provided by the browser are not authoritative. Quote/order requests send item identifiers, quantities and variants; Apps Script should validate against the sheet and compute final values.
+- Cart and local order history live in localStorage, not a customer account or central order-history API. “My Orders” is therefore browser/device-specific.
+- Delivery display/rates are configured in src/lib/delivery.js; the Next order route forwards the selected rate configuration to Apps Script. Keep the Apps Script side consistent when changing delivery behavior.
+- Product catalog is external (Google Sheet). Do not assume product records are stored in this repo.
+
+2. FULL TRACKED/PROJECT FILE TREE
+---------------------------------
+Generated/dependency directories (.next/, node_modules/, .git/) are intentionally omitted. .env.local is intentionally omitted from the tree because it contains secrets. apps-script/ is referenced by README but is absent/empty in the current workspace; do not assume its source is available here. README says its expected files are Code.gs, OrderManager.html, ProductManager.html.
+
+MAHAKRON/
+|-- .gitignore                         Ignore dependencies, build output and environment secrets
+|-- .npmrc                             npm configuration
+|-- jsconfig.json                      JS path aliases (e.g. @/ -> src/)
+|-- next.config.mjs                    Next configuration and response security headers
+|-- package.json                       Scripts and dependencies
+|-- package-lock.json                  Exact npm dependency resolution; update with package changes
+|-- postcss.config.js                  PostCSS plugin setup for Tailwind
+|-- tailwind.config.js                 Tailwind content/theme/plugin configuration
+|-- README.md                          Setup, architecture, requirements, known limitations
+|-- previoucodegs.txt                  Large legacy/previous code archive; not an active source module
+|-- .env.local                         Local secrets/config; never share its values or commit it
+|-- apps-script/                       Expected Apps Script source location; currently no files in workspace
+|-- public/
+|   |-- bg.webp                        Background image asset
+|   |-- bg-watch.webp                  Watch/background image asset
+|   |-- favIcon.webp                   Browser/site icon
+|   |-- hero2.mp4                      Hero video asset
+|   |-- mahakron.webp                  MAHAKRON brand image
+|   |-- mahakron-white.webp            White logo/brand image (also used for social metadata)
+|   |-- zunirah.webp                   Zunirah brand image
+|   |-- zunlogo.png                    Zunirah logo image
+|-- scripts/
+|   |-- loadtest.mjs                   Load/performance test helper; inspect before use
+|-- src/
+|   |-- app/
+|   |   |-- globals.css                Global styles, Tailwind layers and shared styling
+|   |   |-- layout.js                  Root document/layout, metadata, fonts, global providers/header/footer; obtains initial products
+|   |   |-- page.js                    Home page sections and ordering explainer
+|   |   |-- error.js                   App Router error boundary UI
+|   |   |-- not-found.js               404 page
+|   |   |-- robots.js                  robots.txt metadata route
+|   |   |-- sitemap.js                 sitemap.xml generation
+|   |   |-- cart/
+|   |   |   |-- layout.js              Cart route layout/metadata
+|   |   |   `-- page.js                Cart review, quantity/edit/remove flow
+|   |   |-- checkout/
+|   |   |   |-- layout.js              Checkout route layout/metadata
+|   |   |   `-- page.js                Customer/delivery form, quote and order submission UI
+|   |   |-- my-orders/
+|   |   |   |-- layout.js              Local order history route layout/metadata
+|   |   |   `-- page.js                Reads/displays browser-saved order records
+|   |   |-- products/
+|   |   |   |-- page.js                Product catalogue and browsing page
+|   |   |   |-- loading.js              Catalogue loading state
+|   |   |   `-- [slug]/
+|   |   |       |-- page.js            Dynamic product detail page, metadata/SEO and product lookup
+|   |   |       `-- loading.js          Product detail loading state
+|   |   `-- api/
+|   |       |-- products/route.js      GET /api/products; serves product catalog and cache headers
+|   |       |-- quote/route.js         POST /api/quote; validates item shape, rate limits, asks Apps Script for current quote
+|   |       |-- order/route.js         POST /api/order; validates customer/cart, honeypot, rate limit, forwards order to Apps Script
+|   |       `-- telegram/order-failed/route.js  POST internal notification route; validates failed order and sends Telegram text/photo/album
+|   |-- components/                     Reusable interface and client-side state components
+|   |   |-- BackButton.jsx              Browser/history-aware back button
+|   |   |-- CartProvider.jsx             Cart context/reducer, localStorage persistence, cart actions and product synchronization
+|   |   |-- CategoryRow.jsx              Category navigation row
+|   |   |-- Description.jsx              Product description rendering/formatting
+|   |   |-- FeaturedProducts.jsx         Featured product section
+|   |   |-- Footer.jsx                   Site footer
+|   |   |-- Gallery.jsx                  Product image gallery
+|   |   |-- GenderProductSlider.jsx      Gender-filtered product slider
+|   |   |-- GenderTiles.jsx              Gender/category tiles (currently not rendered on home)
+|   |   |-- Header.jsx                   Main navigation, search/menu and cart affordances
+|   |   |-- Hero.jsx                     Home hero/banner
+|   |   |-- HeroProductSlider.jsx        Product slider for a selected category
+|   |   |-- Img.jsx                      Image wrapper/helper
+|   |   |-- Loader.jsx                   Shared loading indicator
+|   |   |-- OrdersProvider.jsx           Local order history and failed-order notification orchestration
+|   |   |-- ProductBuy.jsx               Product purchase controls / add-to-cart interaction
+|   |   |-- ProductCard.jsx              Product tile/card
+|   |   |-- ProductExplorer.jsx          Catalogue filtering/search/sort/browse interactions
+|   |   |-- ProductFallback.jsx          Product unavailable/fallback UI
+|   |   |-- ProductGrid.jsx              Product grid layout
+|   |   |-- ProductsProvider.jsx         Product context, API refresh and sessionStorage cache
+|   |   |-- ProductView.jsx              Product detail composition
+|   |   |-- QuantityStepper.jsx          Reusable quantity control
+|   |   |-- RelatedProducts.jsx          Related/recommended products section
+|   |   `-- TopLoader.jsx                Navigation progress/loading bar
+|   `-- lib/                             Server/shared helpers; check client/server boundaries before importing
+|       |-- apps-script.js               Server-only Apps Script GET/POST client; injects API_SECRET, timeout, response parsing
+|       |-- delivery.js                  Delivery zones/rates and display total helper
+|       |-- format.js                    Phone cleanup/validation and formatting helpers
+|       |-- order-input.js               Whitelist/normalize order item input
+|       |-- products.js                  Product normalization/slugs and server stale-while-revalidate cache
+|       |-- rate-limit.js                In-memory per-IP endpoint limiting helpers
+|       |-- sanitize-html.js             Sanitization/formatting for allowed product description HTML
+|       |-- site.js                      Shared store name, URL, description and currency configuration
+|       `-- ui.js                        Shared UI/data helpers; inspect exports before reuse
+
+3. ROUTES AND CUSTOMER JOURNEY
+------------------------------
+/                  Home: hero, categories, featured products, male product slider and ordering steps.
+/products          Browse/filter/search product catalog.
+/products/[slug]   Product details; variant selection and add to cart.
+/cart              Review cart items and quantities.
+/checkout          Enter customer details and delivery area; obtains a quote and submits order.
+/my-orders         View orders stored in this browser's local storage.
+/api/products      Read product catalog from server-side cached Apps Script data.
+/api/quote         Ask the backend for a current quote based on item IDs/qty/variants.
+/api/order         Validate and submit a cash-on-delivery order.
+/api/telegram/order-failed  Send a failed-order notice to configured Telegram destination.
+/robots.txt, /sitemap.xml  SEO metadata routes.
+
+Typical data flow: RootLayout calls getProducts() -> ProductsProvider shares catalog -> product UI adds item keyed by productId + color + size -> CartProvider persists it -> checkout POSTs /api/quote and /api/order -> Next server calls Apps Script -> result is recorded in OrdersProvider local history. Failed order notification may call the Telegram route.
+
+4. CONFIGURATION AND SECRETS
+----------------------------
+.env.local exists locally but MUST NOT be pasted into another AI, committed, or included with this guide. Variable names and purpose:
+- APPS_SCRIPT_URL: private Apps Script deployment URL (server only).
+- API_SECRET: shared secret between this Next server and Apps Script (server only).
+- NEXT_PUBLIC_SITE_URL: public canonical website base URL.
+- NEXT_PUBLIC_STORE_NAME: public store display name.
+- TELEGRAM_BOT_TOKEN: private Telegram bot token (server only).
+- TELEGRAM_CHAT_ID: destination for failed-order notifications (server only).
+Never prefix secrets with NEXT_PUBLIC_. Use a separate secret channel/config manager when deploying. README describes Apps Script Script Properties including API_SECRET and ADMIN_TOKEN; that backend deployment is not present in this checkout.
+
+5. IMPORTANT FILES TO CHANGE FOR COMMON TASKS
+---------------------------------------------
+- Header/home sections: src/components/Header.jsx, src/app/page.js and relevant home components.
+- Product browse/detail design: ProductExplorer.jsx, ProductGrid.jsx, ProductCard.jsx, ProductView.jsx, ProductBuy.jsx, Gallery.jsx.
+- Cart behavior/persistence: CartProvider.jsx and src/app/cart/page.js.
+- Checkout form and customer journey: src/app/checkout/page.js; server validation/submission: src/app/api/order/route.js; quote endpoint: src/app/api/quote/route.js.
+- Delivery cost: src/lib/delivery.js AND verify matching Apps Script validation/calculation. Sheet is product source of truth.
+- Product transport/cache: src/lib/apps-script.js, src/lib/products.js, src/app/api/products/route.js, ProductsProvider.jsx.
+- Order history and failure notification: OrdersProvider.jsx, src/app/my-orders/page.js, src/app/api/telegram/order-failed/route.js.
+- SEO/store identity: src/lib/site.js, src/app/layout.js, product page metadata, robots.js, sitemap.js.
+- Global styling/theme: src/app/globals.css, tailwind.config.js.
+- Images/video: public/.
+
+6. ENGINEERING RULES FOR A FUTURE AI EDITOR
+------------------------------------------
+1) First inspect the relevant file and its imports/callers. Follow existing patterns and keep changes scoped.
+2) Keep Apps Script URL, API_SECRET, Telegram token and other credentials server-only. Never put secret data in client components, logs, documentation or responses.
+3) Treat client cart/product data as untrusted. Validate and whitelist on the server; Apps Script/sheet is authoritative for products, stock, variants and price.
+4) Keep API response shapes compatible with current callers (usually { success, data } or { success: false, error }). Preserve rate limiting, request validation, timeout and failure behavior when editing endpoints.
+5) Cart line identity includes productId + color + size. Do not merge distinct variants.
+6) Order history is localStorage-based. A change to “my orders” should account for browser/device limits or intentionally migrate the architecture.
+7) Product descriptions may contain formatted content. Use existing sanitization helpers; do not render arbitrary HTML unsafely.
+8) Product records live in an external Sheet and Apps Script. If changing backend contracts or delivery rules, check/update both sides. This checkout currently lacks apps-script source, so identify that limitation before editing backend-only behavior.
+9) Avoid editing package-lock.json unless package.json dependencies change. Do not commit .env.local, node_modules, .next or generated files.
+10) Preserve responsive layout, accessibility labels, loading/error/empty states and Bangladesh locale/currency assumptions (BDT, Dhaka time where applicable).
+11) Before making structural changes, state the affected user flow and data flow. After changes, summarize exact files, behavior, migration/configuration needs and checks performed. Only run checks when requested by the project owner.
+12) This guide describes the workspace snapshot above; re-read actual code because implementation can change after this guide is saved.
+
+7. DEPENDENCIES AND COMMANDS
+----------------------------
+Runtime: Next.js 15, React/React DOM 19, Framer Motion, Lucide/React Icons, react-loader-spinner and react-toastify.
+Styling: Tailwind CSS 3, DaisyUI, PostCSS, Autoprefixer.
+Commands in package.json:
+- npm run dev    Start local development server.
+- npm run build  Create production build.
+- npm start      Serve production build.
+There is no test/lint script declared in package.json. scripts/loadtest.mjs is a separate load-test helper and may generate traffic; inspect its targets before running.
+
+8. KNOWN LIMITS / OPEN CONTEXT
+------------------------------
+- apps-script/ source files are missing from this workspace despite README setup instructions. Ask the owner to provide them or inspect connected Apps Script if backend source edits are needed.
+- Product catalog/backend requires configured Google Apps Script and Sheet.
+- Cart and order history are per-browser local storage, not account-synced.
+- In-memory rate limits are instance-local in serverless deployment; README recommends platform-level edge/firewall protection for orders.
+- Stock is per product, not per color, according to README.
+- Product image hosting may depend on Google Drive/Cloudinary URLs; check actual records before changing image handling.
+- public/hero2.mp4 exists; README's optional hero.mp4 filename is old documentation and may not match the current asset reference.
+- previoucodegs.txt is a legacy archive and is not imported by the running app.
+
+END OF GUIDE

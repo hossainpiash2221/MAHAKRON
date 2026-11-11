@@ -180,12 +180,12 @@ function setupCategories_() {
   sh.setConditionalFormatRules([cf_(st, 'Active', '#dcfce7', '#166534'), cf_(st, 'Inactive', '#e5e7eb', '#374151')]);
 }
 
-/** Products formulas. H = Stock remaining, Q = Sold qty (FIFO by product name, sheet order), R = Total buy cost. For you + Order Manager only. */
+/** Products formulas. H = Stock remaining, Q = Sold qty (FIFO by product ID, sheet order), R = Total buy cost. For you + Order Manager only. */
 function prodFormulas_(r) {
-  const prior = '$P$1:$P' + (r - 1), priorN = '$B$1:$B' + (r - 1);
+  const prior = '$P$1:$P' + (r - 1), priorId = '$A$1:$A' + (r - 1);
   return [
     '=P' + r,                                                    // Stock (Remaining, auto) = Purchased Qty
-    '=IF($A' + r + '="","",MAX(0,MIN(N($P' + r + '),SUMIFS(Orders!$K$2:$K$5000,Orders!$I$2:$I$5000,$B' + r + ',Orders!$Q$2:$Q$5000,"<>Cancelled")-SUMIFS(' + prior + ',' + priorN + ',$B' + r + '))))',
+    '=IF($A' + r + '="","",MAX(0,MIN(N($P' + r + '),SUMIFS(Orders!$K$2:$K$5000,Orders!$H$2:$H$5000,$A' + r + ',Orders!$Q$2:$Q$5000,"<>Cancelled")-SUMIFS(' + prior + ',' + priorId + ',$A' + r + '))))',
     '=IF($A' + r + '="","",N($O' + r + ')*N($P' + r + '))'
   ];
 }
@@ -562,9 +562,8 @@ function createOrder_(d, manual) {
     order.forEach(id => {
       const p = products.filter(x => x.id === id)[0]; if (!p) throw new Error('Product not found: ' + id);
       if (p.status !== 'Active') throw new Error('"' + p.productName + '" is not available.');
-      const k = nameKey_(p.productName);
       const price = want[id].price != null ? want[id].price : p.price;
-      const img = products.filter(x => nameKey_(x.productName) === k).map(x => x.images.filter(String)[0]).filter(Boolean)[0] || '';
+      const img = p.images.filter(String)[0] || '';
       lines.push({ p: p, qty: want[id].qty, price: price, sub: price * want[id].qty, img: img });
       subtotal += price * want[id].qty;
     });
@@ -627,9 +626,8 @@ function getOrders_() {
 
 /* ---- called by Order Manager ---- */
 function getOrderMgrData() {
-  const rows = readProducts_(), left = {};
-  rows.forEach(p => { if (p.status === 'Active') { const k = nameKey_(p.productName); left[k] = (left[k] || 0) + Math.max(0, p.stock); } });
-  const picker = publicGroups_(rows).map(p => ({ id: p.id, name: p.productName, price: p.price, gender: p.gender, category: p.category, stock: left[nameKey_(p.productName)] || 0 }));   // stock is shown to YOU only
+  const rows = readProducts_();
+  const picker = publicGroups_(rows).map(p => ({ id: p.id, name: p.productName, price: p.price, gender: p.gender, category: p.category, stock: Math.max(0, Number(p.stock) || 0) }));   // stock is shown to YOU only
   return JSON.stringify({
     orders: getOrders_(), products: picker, statuses: ORDER_STATUSES, payments: PAYMENTS, expenseTypes: EXPENSE_TYPES
   });
@@ -668,9 +666,8 @@ function updateOrder_(orderId, d) {
     const lines = []; let subtotal = 0;
     order.forEach(id => {
       const p = products.filter(x => x.id === id)[0]; if (!p) throw new Error('Product not found: ' + id);
-      const key = nameKey_(p.productName);
       const price = want[id].price != null ? want[id].price : p.price;
-      const img = products.filter(x => nameKey_(x.productName) === key).map(x => x.images.filter(String)[0]).filter(Boolean)[0] || '';
+      const img = p.images.filter(String)[0] || '';
       lines.push({ p: p, qty: want[id].qty, price: price, sub: price * want[id].qty, img: img });
       subtotal += price * want[id].qty;
     });
@@ -840,24 +837,16 @@ function publicProduct_(p) {
   return Object.assign({}, p, { description: v.text, colors: v.colors, sizes: v.sizes });
 }
 
-/** Public catalogue. Decided ONLY by the Status column. Quantity is never read or counted.
+/** Public catalogue. Each Product ID is a separate product, even when names match.
+ *  Decided ONLY by the Status column. Quantity is never read or counted.
  *    Active       -> shown, can be ordered
  *    Out of Stock -> shown with an "Out of stock" badge, cannot be ordered (you set this by hand)
- *    Inactive     -> hidden
- *  Same Product Name = one product. Price/ID come from the NEWEST (bottom-most) Active row. */
+ *    Inactive     -> hidden */
 function publicGroups_(rows) {
-  const g = {}, keys = [];
-  rows.forEach(p => { const k = nameKey_(p.productName); if (!g[k]) { g[k] = []; keys.push(k); } g[k].push(p); });
-  const out = [];
-  keys.forEach(k => {
-    const visible = g[k].filter(p => p.status !== 'Inactive'); if (!visible.length) return;
-    const active = visible.filter(p => p.status === 'Active');
-    const cur = active.length ? active[active.length - 1] : visible[visible.length - 1];
-    const imgs = [cur].concat(visible.slice().reverse()).map(p => p.images.filter(String)).filter(a => a.length)[0] || [];
-    out.push({ id: cur.id, productName: cur.productName, gender: cur.gender, category: cur.category, price: cur.price, oldPrice: cur.oldPrice,
-      description: cur.description, status: active.length ? 'Active' : 'Out of Stock', images: imgs });
-  });
-  return out;
+  return rows.filter(p => p.status !== 'Inactive').map(p => ({
+    id: p.id, productName: p.productName, gender: p.gender, category: p.category, price: p.price, oldPrice: p.oldPrice,
+    description: p.description, status: p.status, images: p.images.filter(String)
+  }));
 }
 
 // function getPublicProducts_() {
@@ -911,7 +900,7 @@ function quote_(d) {
     const color = String(it.color || '').trim(), size = String(it.size || '').trim();
     const out = { productId: id, ok: false, error: '', color: color, size: size, quantity: q };
     const row = rows.filter(x => x.id === id)[0];
-    const g = row && groups.filter(x => nameKey_(x.productName) === nameKey_(row.productName))[0];
+    const g = row && groups.filter(x => x.id === row.id)[0];
     if (!g) { out.error = 'This product is no longer available.'; return out; }
     out.productId = g.id; out.name = g.productName; out.price = g.price; out.image = g.images[0] || '';
     if (!(q >= 1 && q <= 50)) { out.error = 'Invalid quantity.'; return out; }

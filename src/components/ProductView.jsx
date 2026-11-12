@@ -319,7 +319,7 @@ export default function ProductView({ p }) {
         )}
 
         {/* RELATED PRODUCTS */}
-        <div className="mt-14 border-t border-ink/10 pt-8 md:mt-20">
+        <div className="   ">
           <RelatedProducts current={p} />
         </div>
 

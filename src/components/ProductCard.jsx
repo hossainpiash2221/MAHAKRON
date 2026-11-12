@@ -34,6 +34,8 @@ export default function ProductCard({ p, priority = false }) {
 
   const [err, setErr] = useState("");
 
+  const hasSecondImage = Boolean(p.images?.[1]);
+
   function build() {
     if (p.colors.length && !color) {
       setErr("Choose a colour");
@@ -101,17 +103,38 @@ export default function ProductCard({ p, priority = false }) {
             bg-mist
           "
         >
+          {/* FIRST IMAGE */}
           <Img
             src={p.images[0]}
             alt={p.productName}
             priority={priority}
             className={`
-              h-full w-full object-cover
-              transition-transform duration-500
-              group-hover:scale-[1.04]
+              absolute inset-0 h-full w-full object-cover
+              transition-[opacity,transform] duration-700 ease-in-out
+              ${
+                hasSecondImage
+                  ? "group-hover:opacity-0 group-hover:scale-[1.04]"
+                  : "group-hover:scale-[1.04]"
+              }
               ${out ? "opacity-60 grayscale-[40%]" : ""}
             `}
           />
+
+          {/* SECOND IMAGE - SMOOTH HOVER */}
+          {hasSecondImage && (
+            <Img
+              src={p.images[1]}
+              alt={`${p.productName} - Second View`}
+              className={`
+                pointer-events-none absolute inset-0
+                h-full w-full object-cover
+                opacity-0 scale-[1.04]
+                transition-[opacity,transform] duration-700 ease-in-out
+                group-hover:opacity-100 group-hover:scale-100
+                ${out ? "grayscale-[40%]" : ""}
+              `}
+            />
+          )}
 
           {/* DISCOUNT / STOCK BADGE */}
           {out ? (
@@ -172,7 +195,9 @@ export default function ProductCard({ p, priority = false }) {
         >
           <h3
             className="
-              min-h-[2.5rem] break-words text-xs font-semibold leading-5 text-dark_green transition-colors duration-200 group-hover:text-pink sm:text-sm md:text-base
+              min-h-[2.5rem] break-words text-xs font-semibold
+              leading-5 text-dark_green transition-colors duration-200
+              group-hover:text-pink sm:text-sm md:text-base
             "
           >
             {p.productName}
@@ -182,9 +207,8 @@ export default function ProductCard({ p, priority = false }) {
         {/* PRICE */}
         <div
           className="
-           flex min-w-0 flex-wrap
+            flex min-w-0 flex-wrap
             items-baseline gap-x-1.5 gap-y-0
-            
           "
         >
           <span

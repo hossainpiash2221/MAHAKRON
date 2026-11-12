@@ -512,7 +512,7 @@ export default function Header() {
         ref={searchRef}
         className={`pointer-events-none absolute inset-x-0 top-[calc(100%-64px)] z-40 mx-auto h-16 w-full max-w-8xl px-3 transition-all duration-300 sm:px-4 md:top-[calc(100%-68px)] md:h-[68px] lg:px-6 ${searchFocused ? "opacity-100" : "opacity-0"}`}
       >
-        <div className="flex h-full items-center pr-[150px] sm:pr-[160px] lg:pr-[205px]">
+        <div className="flex h-full items-center pr-[112px] sm:pr-[120px] lg:pr-[205px]">
           <div className={`min-w-0 origin-left transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${searchFocused ? "pointer-events-auto w-full scale-x-100" : "w-0 scale-x-95"}`}>
             <form
               onSubmit={(event) => {
@@ -541,7 +541,7 @@ export default function Header() {
               <button type="button" aria-label="Close search" onClick={closeSearch} className="shrink-0 rounded-full p-1 text-dark_green transition-colors hover:bg-dark_green/10"><FiX size={19} /></button>
             </form>
             {searchFocused && searchQuery.trim() && (
-              <div className="absolute left-3 right-[162px] top-[calc(100%-2px)] max-h-[60vh] overflow-y-auto rounded-xl border border-[#E4EDE8] bg-white shadow-[0_12px_30px_rgba(23,61,50,0.09)] sm:left-4 sm:right-[176px] lg:left-6 lg:right-[229px]">
+              <div className="absolute left-3 right-[124px] top-[calc(100%-2px)] max-h-[60vh] overflow-y-auto rounded-xl border border-[#E4EDE8] bg-white shadow-[0_12px_30px_rgba(23,61,50,0.09)] sm:left-4 sm:right-[136px] lg:left-6 lg:right-[229px]">
                 {searchResults.length ? (
                   <>
                     {searchResults.map((product, index) => (

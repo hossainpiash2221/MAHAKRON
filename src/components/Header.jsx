@@ -15,11 +15,13 @@ import {
   FiSearch,
 } from "react-icons/fi";
 import { SiTiktok } from "react-icons/si";
+import CartDrawer from "./CartDrawer";
 
 export default function Header() {
   const { count, ready } = useCart();
   const { products = [] } = useProducts();
 
+  const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -329,9 +331,10 @@ export default function Header() {
             </Link>
 
             {/* Desktop Cart */}
-            <Link
+            <button
+              type="button"
               id="cart-target"
-              href="/cart"
+              onClick={() => { closeMenus(); closeSearch(); setCartOpen(true); }}
               data-shopping-bag-target
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-[5px] bg-pink px-3 py-2 text-white transition-all duration-300 hover:shadow-md"
             >
@@ -346,16 +349,17 @@ export default function Header() {
               <span className="relative z-10 min-w-5 rounded-full bg-white px-1.5 text-center text-xs font-semibold text-ink">
                 {ready ? count : 0}
               </span>
-            </Link>
+            </button>
           </nav>
 
           {/* ================= MOBILE + TABLET RIGHT ================= */}
           <div className="relative z-20 ml-auto flex items-center gap-2 lg:hidden">
             <button type="button" onClick={openSearch} aria-label="Search products" className={`flex h-10 w-10 items-center justify-center rounded-full text-dark_green transition-all duration-300 ${searchFocused ? "pointer-events-none opacity-0 w-0 overflow-hidden" : ""}`}><FiSearch size={21} /></button>
             {/* Mobile Cart */}
-            <Link
+            <button
+              type="button"
               id="cart-target-mobile"
-              href="/cart"
+              onClick={() => { closeMenus(); closeSearch(); setCartOpen(true); }}
               aria-label={`Shopping cart, ${ready ? count : 0} items`}
               className={`group relative inline-flex items-center gap-1.5 overflow-hidden rounded-[5px] bg-pink px-2.5 py-2 text-white transition-all duration-300 hover:shadow-md ${searchFocused ? "pointer-events-none opacity-0 scale-95" : "opacity-100 scale-100"}`}
             >
@@ -366,7 +370,7 @@ export default function Header() {
               <span className="relative z-10 min-w-5 rounded-full bg-white px-1.5 text-center text-xs font-semibold text-ink">
                 {ready ? count : 0}
               </span>
-            </Link>
+            </button>
 
             {/* Hamburger */}
             <button
@@ -568,8 +572,7 @@ export default function Header() {
         </div>
       </div>
       </header>
-
-
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }

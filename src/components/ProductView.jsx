@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { taka } from "@/lib/format";
 import Gallery from "./Gallery";
@@ -15,10 +16,17 @@ export default function ProductView({ p }) {
   const savings =
     p.oldPrice > p.price ? p.oldPrice - p.price : 0;
 
+  // PRODUCT ID
+  const productId =
+    p.id !== undefined &&
+    p.id !== null &&
+    String(p.id).trim() !== ""
+      ? String(p.id)
+      : "";
+
   return (
     <main className="min-h-screen">
-
-      <div className="mx-auto max-w-6xl px-4 pb-16 pt-[70px] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-[40px] md:pt-[70px]  sm:px-6 lg:px-8">
 
         {/* BACK BUTTON */}
         <div className="mb-5">
@@ -61,12 +69,36 @@ export default function ProductView({ p }) {
 
           {/* LEFT - PRODUCT GALLERY */}
           <div className="min-w-0">
+            <div className="relative">
 
-            <Gallery
-              images={p.images}
-              alt={p.productName}
-            />
+              <Gallery
+                images={p.images}
+                alt={p.productName}
+              />
 
+              {/* PRODUCT ID - TOP LEFT */}
+              {productId && (
+                <span
+                  className="
+                    pointer-events-none
+                    absolute left-3 top-3 z-4
+                    max-w-[80%] truncate
+                    rounded-[4px]
+                    border border-white/20
+                    bg-dark_green/90
+                    px-3 py-1.5
+                    text-[16px] font-semibold
+                    tracking-wide text-white
+                    shadow-sm backdrop-blur-sm
+                    sm:left-4 sm:top-4
+                    sm:text-md
+                  "
+                >
+                  Product Code: {productId}
+                </span>
+              )}
+
+            </div>
           </div>
 
           {/* RIGHT - STICKY PRODUCT INFORMATION */}
@@ -90,7 +122,7 @@ export default function ProductView({ p }) {
             </div>
 
             {/* PRODUCT NAME */}
-            <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-ink sm:text-4xl">
+            <h1 className="font-display text-2xl md:text-3xl font-bold leading-tight tracking-tight text-ink sm:text-4xl">
               {p.productName}
             </h1>
 
@@ -292,7 +324,6 @@ export default function ProductView({ p }) {
         </div>
 
       </div>
-
     </main>
   );
 }

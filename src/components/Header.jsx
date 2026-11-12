@@ -357,7 +357,7 @@ export default function Header() {
               id="cart-target-mobile"
               href="/cart"
               aria-label={`Shopping cart, ${ready ? count : 0} items`}
-              className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-[5px] bg-pink px-2.5 py-2 text-white transition-all duration-300 hover:shadow-md"
+              className={`group relative inline-flex items-center gap-1.5 overflow-hidden rounded-[5px] bg-pink px-2.5 py-2 text-white transition-all duration-300 hover:shadow-md ${searchFocused ? "pointer-events-none opacity-0 scale-95" : "opacity-100 scale-100"}`}
             >
               <span className="absolute bottom-0 left-0 h-3 w-3 scale-0 rounded-full bg-dark_green transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[35]" />
 
@@ -378,7 +378,7 @@ export default function Header() {
                 setCategoryOpen(false);
                 setSearchFocused(false);
               }}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[5px] border border-ink/10 transition-all duration-300 hover:bg-pink hover:text-white"
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[5px] border border-ink/10 transition-all duration-300 hover:bg-pink hover:text-white ${searchFocused ? "pointer-events-none opacity-0 scale-95" : "opacity-100 scale-100"}`}
             >
               {menuOpen ? (
                 <FiX className="text-[22px]" />
@@ -507,12 +507,12 @@ export default function Header() {
             </nav>
           </div>
         )}
-      {/* Reserve space for cart + hamburger on mobile, and shopping bag on desktop. */}
+      {/* Mobile search uses the entire navbar; desktop keeps space for the shopping bag. */}
       <div
         ref={searchRef}
         className={`pointer-events-none absolute inset-x-0 top-[calc(100%-64px)] z-40 mx-auto h-16 w-full max-w-8xl px-3 transition-all duration-300 sm:px-4 md:top-[calc(100%-68px)] md:h-[68px] lg:px-6 ${searchFocused ? "opacity-100" : "opacity-0"}`}
       >
-        <div className="flex h-full items-center pr-[112px] sm:pr-[120px] lg:pr-[205px]">
+        <div className="flex h-full items-center pr-0 lg:pr-[205px]">
           <div className={`min-w-0 origin-left transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${searchFocused ? "pointer-events-auto w-full scale-x-100" : "w-0 scale-x-95"}`}>
             <form
               onSubmit={(event) => {
@@ -541,7 +541,7 @@ export default function Header() {
               <button type="button" aria-label="Close search" onClick={closeSearch} className="shrink-0 rounded-full p-1 text-dark_green transition-colors hover:bg-dark_green/10"><FiX size={19} /></button>
             </form>
             {searchFocused && searchQuery.trim() && (
-              <div className="absolute left-3 right-[124px] top-[calc(100%-2px)] max-h-[60vh] overflow-y-auto rounded-xl border border-[#E4EDE8] bg-white shadow-[0_12px_30px_rgba(23,61,50,0.09)] sm:left-4 sm:right-[136px] lg:left-6 lg:right-[229px]">
+              <div className="absolute left-3 right-3 top-[calc(100%-2px)] max-h-[60vh] overflow-y-auto rounded-xl border border-[#E4EDE8] bg-white shadow-[0_12px_30px_rgba(23,61,50,0.09)] sm:left-4 sm:right-4 lg:left-6 lg:right-[229px]">
                 {searchResults.length ? (
                   <>
                     {searchResults.map((product, index) => (

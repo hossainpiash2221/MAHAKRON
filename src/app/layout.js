@@ -1,15 +1,21 @@
 
 import './globals.css';
+
+import { Suspense } from 'react';
 import { Bricolage_Grotesque, Figtree } from 'next/font/google';
+
 import { SITE } from '@/lib/site';
 import { getProducts } from '@/lib/products';
+
 import ProductsProvider from '@/components/ProductsProvider';
 import CartProvider from '@/components/CartProvider';
 import OrdersProvider from '@/components/OrdersProvider';
+
 import Header from '@/components/Header';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import TopLoader from '@/components/TopLoader';
 import Footer from '@/components/Footer';
+
 import { ToastContainer, Bounce } from 'react-toastify';
 
 const display = Bricolage_Grotesque({
@@ -100,7 +106,7 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
-  // Products are served from the existing server-side cache.
+  // Existing server-side product caching
   const products = await getProducts();
 
   const ld = {
@@ -163,8 +169,10 @@ export default async function RootLayout({ children }) {
 
               <Footer />
 
-              {/* Shared navigation for mobile screens */}
-              <MobileBottomNav />
+              {/* Mobile navigation Suspense boundary */}
+              <Suspense fallback={null}>
+                <MobileBottomNav />
+              </Suspense>
 
             </OrdersProvider>
           </CartProvider>
@@ -173,7 +181,10 @@ export default async function RootLayout({ children }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(ld).replace(/</g, '\\u003c'),
+            __html: JSON.stringify(ld).replace(
+              /</g,
+              '\\u003c'
+            ),
           }}
         />
       </body>

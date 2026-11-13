@@ -10,7 +10,7 @@ import DeliveryPrefetch from '@/components/DeliveryPrefetch';
 import Header from '@/components/Header';
 import TopLoader from '@/components/TopLoader';
 import Footer from '@/components/Footer';
-import MobileBottomNav from '@/components/MobileBottomNav';
+import ConditionalMobileBottomNav from '@/components/ConditionalMobileBottomNav';
 import { Suspense } from 'react';
 import { ToastContainer, Bounce } from 'react-toastify';
 
@@ -77,7 +77,9 @@ export default async function RootLayout({ children }) {
                 />
               </main>
               <Footer />
-              <Suspense fallback={null}><MobileBottomNav /></Suspense>
+              <Suspense fallback={null}>
+                <ConditionalMobileBottomNav />
+              </Suspense>
             </OrdersProvider>
           </CartProvider>
         </ProductsProvider>

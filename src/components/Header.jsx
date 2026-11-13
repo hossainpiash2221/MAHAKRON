@@ -276,7 +276,7 @@ export default function Header() {
             onClick={closeMenus}
           >
             <img
-              className="h-[34px] w-auto object-contain sm:h-[38px] md:h-[42px]"
+              className="h-[26px] w-auto object-contain sm:h-[28px] md:h-[32px]"
               src="/fashionzLogo.webp"
               alt="Fashionz"
               width={160}

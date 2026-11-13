@@ -41,7 +41,7 @@ export default function Hero() {
       <div className="mx-auto flex min-h-[78svh] max-w-7xl flex-col justify-center px-4 py-20">
         <h1 className="font-display text-4xl font-extrabold leading-[1.02] tracking-tight  sm:text-7xl">
           <span className="rise block">Discover Your Style </span>
-          <span className="rise text-pink block" style={{ animationDelay: '.12s' }}> With MAHAKRON.</span>
+          <span className="rise text-pink block" style={{ animationDelay: '.12s' }}> With FASHIONZ EMPIRE.</span>
           {/* <span className="rise block" style={{ animationDelay: '.24s' }}>at your door.</span> */}
         </h1>
         <p className="rise mt-6 max-w-md text-lg text-white/85" style={{ animationDelay: '.4s' }}>

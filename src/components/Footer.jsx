@@ -7,10 +7,10 @@ import { FiArrowUpRight } from "react-icons/fi";
 // তোমার actual information এখানে বসাবে
 const CONTACT = {
   phone: "+8801400505097",
-  email: "mahakron@gmail.com",
+  email: "zunirah26@gmail.com",
   location: "United Garder block-A, ECB Chottor, Dhaka Cantt, Dhaka-1206",
 
-  facebook: "https://www.facebook.com/profile.php?id=61594889956569",
+  facebook: "https://www.facebook.com/FashionzEmpire",
   instagram: "https://www.instagram.com/p/DeZW9VpGBog/?cplk=NDJsMWQ2cmFhajhy",
   tiktok: "https://www.tiktok.com/@mahakron?lang=en",
 };
@@ -83,16 +83,14 @@ export default function Footer() {
                 href="/"
                 className="inline-block text-3xl font-semibold tracking-[0.12em] sm:text-4xl"
               >
-                <img src="/mahakron-white.webp" alt="Mahakron" />
+                <img src="/fashionzLogo2.webp" alt="FASHIONZ EMPIRE" />
               </Link>
 
-              <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.35em] text-white/60">
-                Fashion For Every You
-              </p>
+             
 
               <p className="mt-7 max-w-[330px] text-sm leading-7 text-white/65">
                 Discover timeless fashion, effortless elegance and everyday
-                comfort. Find your perfect style with MAHAKRON.
+                comfort. Find your perfect style with FASHIONZ EMPIRE.
               </p>
 
               {/* CONTACT DETAILS */}
@@ -171,7 +169,7 @@ export default function Footer() {
           {/* COPYRIGHT */}
           <div className="flex flex-col items-center justify-between gap-4 border-b border-white/15 py-6 text-center sm:flex-row sm:text-left">
             <p className="text-xs text-white/55 sm:text-sm">
-              © {new Date().getFullYear()} MAHAKRON. All Rights Reserved.
+              © {new Date().getFullYear()} FASHIONZ EMPIRE. All Rights Reserved.
             </p>
 
             <p className="text-xs text-white/55 sm:text-sm">
@@ -179,24 +177,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* LARGE BOTTOM LOGO */}
-          {/* <div className="overflow-hidden py-8 sm:py-12">
-          <Link
-            href="/"
-            aria-label="ZUNIRAH Home"
-            className="block w-full"
-          >
-            <Image
-              src="/mahakron-white.webp"
-              alt="ZUNIRAH Fashion"
-              width={400}
-              height={400}
-              sizes="40vw"
-              className="h-auto w-50% mx-auto object-contain"
-              priority={false}
-            />
-          </Link>
-        </div> */}
+    
         </div>
       </div>
     </footer>

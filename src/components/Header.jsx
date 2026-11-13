@@ -28,24 +28,6 @@ export default function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
   const searchInputRef = useRef(null);
 
-  // Rotate between MAHAKRON and ZUNIRAH logos every 5 seconds.
-  const logos = ["/mahakron.webp", "/zunirah.webp"];
-  const [logoIndex, setLogoIndex] = useState(0);
-
-  useEffect(() => {
-    // Preload both small logo images to reduce flicker when switching.
-    logos.forEach((src) => {
-      const image = new Image();
-      image.src = src;
-    });
-
-    const interval = setInterval(() => {
-      setLogoIndex((previous) => (previous === 0 ? 1 : 0));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   const text =
     "Elegance in Every Look, Style in Every Moment — MAHAKRON | ZUNIRAH";
 
@@ -295,8 +277,8 @@ export default function Header() {
           >
             <img
               className="h-[34px] w-auto object-contain sm:h-[38px] md:h-[42px]"
-              src={logos[logoIndex]}
-              alt={logoIndex === 0 ? "MAHAKRON" : "ZUNIRAH"}
+              src="/fashionzLogo.webp"
+              alt="Fashionz"
               width={160}
               height={42}
               decoding="async"
@@ -500,12 +482,12 @@ export default function Header() {
                 </p>
 
                 <a
-                  href="mailto:mahakron@gmail.com"
+                  href="mailto:zunirah26@gmail.com"
                   className="flex items-center gap-3 text-sm transition-colors duration-300 hover:text-pink"
                 >
                   <FiMail className="shrink-0 text-[17px]" />
 
-                  <span className="break-all">mahakron@gmail.com</span>
+                  <span className="break-all">zunirah26@gmail.com</span>
                 </a>
               </div>
             </nav>

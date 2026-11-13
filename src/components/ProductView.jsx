@@ -272,7 +272,7 @@ export default function ProductView({ p }) {
                 </svg>
 
                 <span className="text-[11px] font-medium tracking-wide text-ink/50">
-                  Shop with confidence at MAHAKRON
+                  Shop with confidence at FASHIONZ EMPIRE.
                 </span>
 
               </div>

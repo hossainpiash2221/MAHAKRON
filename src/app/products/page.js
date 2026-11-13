@@ -28,16 +28,16 @@ import Loader from '@/components/Loader';
 export const metadata = {
   title: 'Shop Fashion, Watches & Accessories',
   description:
-    "Explore men's and women's fashion, watches, clothing, sarees, three-piece collections, shoes and accessories at MAHAKRON. Order online across Bangladesh.",
+    "Explore men's and women's fashion, watches, clothing, sarees, three-piece collections, shoes and accessories at FASHIONZ EMPIRE. Order online across Bangladesh.",
 
   alternates: {
     canonical: '/products',
   },
 
   openGraph: {
-    title: 'Shop Fashion, Watches & Accessories | MAHAKRON',
+    title: 'Shop Fashion, Watches & Accessories | FASHIONZ EMPIRE',
     description:
-      'Discover fashion, watches, clothing and accessories at MAHAKRON Bangladesh.',
+      'Discover fashion, watches, clothing and accessories at FASHIONZ EMPIRE Bangladesh.',
     url: '/products',
     type: 'website',
   },

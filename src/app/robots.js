@@ -1,8 +1,5 @@
 
-const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  'https://fashionzempire.vercel.app'
-).replace(/\/$/, '');
+const SITE_URL = 'https://fashionzempire.vercel.app';
 
 export default function robots() {
   return {

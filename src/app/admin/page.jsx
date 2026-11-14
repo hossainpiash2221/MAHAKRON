@@ -218,6 +218,47 @@ const sections = [
 
 // ----------------------------------------
 
+// Convert selected product images to the same WebP format as Add Product.
+async function editImageToWebp(file) {
+  if (!file?.type?.startsWith('image/') || file.size > 12 * 1024 * 1024) {
+    throw new Error('Choose an image smaller than 12 MB.');
+  }
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const scale = Math.min(1, 1400 / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('Canvas unavailable.')); return; }
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (!blob || blob.type !== 'image/webp') {
+          reject(new Error('WebP conversion failed.'));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve({
+          mimeType: 'image/webp',
+          base64: String(reader.result).split(',')[1]
+        });
+        reader.onerror = () => reject(new Error('Image reading failed.'));
+        reader.readAsDataURL(blob);
+      }, 'image/webp', 0.82);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Could not open selected image.'));
+    };
+    image.src = objectUrl;
+  });
+}
+
 // EDIT PRODUCT DESCRIPTION
 
 // ----------------------------------------
@@ -295,6 +336,8 @@ export default function AdminPage() {
   const [searchField, setSearchField] = useState('all');
 
   const [edit, setEdit] = useState(null);
+  const [editImageFiles, setEditImageFiles] = useState([null, null, null]);
+  const [editImagePreviews, setEditImagePreviews] = useState(['', '', '']);
 
   const [saving, setSaving] = useState(false);
 
@@ -524,6 +567,10 @@ export default function AdminPage() {
 
   function beginEdit(p) {
 
+    // Reset pending uploads when switching between products.
+    setEditImageFiles([null, null, null]);
+    setEditImagePreviews(['', '', '']);
+
     setEdit({
 
       ...blank,
@@ -550,6 +597,23 @@ export default function AdminPage() {
 
   // --------------------------------------
 
+  useEffect(() => {
+    return () => editImagePreviews.forEach(url => {
+      if (url) URL.revokeObjectURL(url);
+    });
+  }, [editImagePreviews]);
+
+  function chooseEditImage(slot, file) {
+    if (!file) return;
+    if (!file.type.startsWith('image/') || file.size > 12 * 1024 * 1024) {
+      setNotice('Choose an image smaller than 12 MB.');
+      return;
+    }
+    setEditImageFiles(prev => prev.map((v, i) => i === slot ? file : v));
+    setEditImagePreviews(prev => prev.map((v, i) => i === slot ? URL.createObjectURL(file) : v));
+    setNotice('Image selected. Click Save changes to upload.');
+  }
+
   // SAVE EDITED PRODUCT
 
   // --------------------------------------
@@ -557,58 +621,47 @@ export default function AdminPage() {
 
 
   async function save(e) {
-
     e.preventDefault();
-
-
-
+    if (saving || !edit) return;
     setSaving(true);
-
-    setNotice('');
-
-
-
+    setNotice('Saving product details...');
     try {
-
+      // Save text fields first. Existing image URLs are preserved.
       await request('productSave', {
-
-        product: {
-
-          ...edit,
-
-          id: edit.id
-
-        }
-
+        product: { ...edit, id: edit.id }
       });
 
-
-
-      setNotice(
-
-        `Product ${edit.id} updated successfully.`
-
-      );
-
-
-
+      const nextImages = [...(edit.images || [])];
+      for (let i = 0; i < 3; i++) {
+        const file = editImageFiles[i];
+        if (!file) continue;
+        setNotice(`Uploading image ${i + 1} of product ${edit.id}...`);
+        const converted = await editImageToWebp(file);
+        // The Apps Script productImage action must replace the requested slot.
+        const result = await request('productImage', {
+          productId: edit.id,
+          slot: i + 1,
+          fileName: file.name,
+          replace: true,
+          ...converted
+        });
+        if (!result?.url) {
+          throw new Error(`Image ${i + 1} was not replaced. Check Apps Script productImage.`);
+        }
+        nextImages[i] = result.url;
+        // Clear only successful uploads, allowing failed ones to be retried.
+        setEditImageFiles(prev => prev.map((v, n) => n === i ? null : v));
+        setEditImagePreviews(prev => prev.map((v, n) => n === i ? '' : v));
+        setEdit(prev => prev?.id === edit.id ? { ...prev, images: [...nextImages] } : prev);
+      }
       await refresh();
-
-    } catch (e) {
-
-      setNotice('Error: ' + e.message);
-
+      setNotice(`Product ${edit.id} updated successfully.`);
+    } catch (err) {
+      setNotice(`Error: ${err.message}. Product details or earlier images may already be saved; retry remaining images.`);
     } finally {
-
       setSaving(false);
-
     }
-
   }
-
-
-
-  // --------------------------------------
 
   // SHARED STYLES
 
@@ -1673,21 +1726,59 @@ export default function AdminPage() {
 
 
 
-                    {/* Image Information */}
-
-
-
-                    <p className="text-xs text-[#888]">
-
-                      Existing images remain
-
-                      unchanged. Image replacement
-
-                      is not included in this
-
-                      editor yet.
-
-                    </p>
+                                        {/* Edit product images: each slot can be replaced independently */}
+                    <section className="space-y-3 rounded-2xl border border-[#e7e7e7] p-3 sm:p-5">
+                      <div>
+                        <h3 className="text-sm font-bold sm:text-base">Product images</h3>
+                        <p className="mt-1 text-xs text-[#888]">
+                          Select a new image to replace a slot. Unselected images stay unchanged.
+                          Maximum 12 MB each; converted to WebP before upload.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                        {[0, 1, 2].map(i => {
+                          const src = editImagePreviews[i] || edit.images?.[i];
+                          return (
+                            <div key={i} className="min-w-0 rounded-xl border border-[#e7e7e7] p-2 sm:p-3">
+                              <div className="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-[#fafafa]">
+                                {src ? (
+                                  <img src={src} alt={`Product image ${i + 1}`} className="h-full w-full object-contain" />
+                                ) : (
+                                  <Package size={25} className="text-[#bbb]" />
+                                )}
+                              </div>
+                              <p className="mt-2 text-center text-xs font-semibold">Image {i + 1}</p>
+                              <label className="mt-2 block cursor-pointer rounded-lg border border-[#ddd] px-2 py-2 text-center text-[11px] font-semibold hover:bg-[#fafafa] sm:text-xs">
+                                {editImageFiles[i] ? 'Change selection' : src ? 'Replace image' : 'Add image'}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="sr-only"
+                                  disabled={saving}
+                                  onChange={e => {
+                                    chooseEditImage(i, e.target.files?.[0]);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                              {editImageFiles[i] && (
+                                <button
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={() => {
+                                    setEditImageFiles(prev => prev.map((v, n) => n === i ? null : v));
+                                    setEditImagePreviews(prev => prev.map((v, n) => n === i ? '' : v));
+                                  }}
+                                  className="mt-2 w-full text-center text-[11px] text-red-600 underline"
+                                >
+                                  Cancel selection
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
 
 
 

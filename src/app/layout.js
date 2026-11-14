@@ -36,8 +36,14 @@ const SITE_URL = (
 const OG_IMAGE =
   'https://res.cloudinary.com/jedeqejq/image/upload/v1794673470/opengraph.png';
 
+
 export const metadata = {
   metadataBase: new URL(SITE_URL),
+
+  verification: {
+    google: 'HhG7EPiBr5CWP5qCDeLlNqSkf6Oe18nS7e0OOHCKGms',
+  },
+
 
   title: {
     default:

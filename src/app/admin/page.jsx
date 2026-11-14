@@ -2123,19 +2123,18 @@ export default function AdminPage() {
 
                                   {p.images?.[0] ? (
 
-                                    <img
-
-                                      src={
-
-                                        p.images[0]
-
-                                      }
-
-                                      alt=""
-
-                                      className="h-11 w-11 rounded-lg border object-contain"
-
-                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setLightbox({ src: p.images[0], alt: p.productName || 'Product image' })}
+                                      aria-label={`View larger image of ${p.productName || 'product'}`}
+                                      className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                                    >
+                                      <img
+                                        src={p.images[0]}
+                                        alt=""
+                                        className="h-full w-full object-contain"
+                                      />
+                                    </button>
 
                                   ) : (
 

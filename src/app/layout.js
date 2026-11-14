@@ -37,7 +37,7 @@ export const metadata = {
     title: 'FASHIONZ EMPIRE | Your Style, Your Statement',
     description: "Discover men's and women's fashion, watches, clothing and accessories at FASHIONZ EMPIRE Bangladesh.",
     siteName: 'FASHIONZ EMPIRE', locale: 'en_BD', type: 'website',
-    images: [{ url: '/mahakron-white.webp', width: 1200, height: 630, alt: 'FASHIONZ EMPIRE Fashion & Lifestyle Collection' }],
+    images: [{ url: 'https://res.cloudinary.com/jedeqejq/image/upload/v1794673470/opengraph.png', width: 1200, height: 630, alt: 'FASHIONZ EMPIRE Fashion & Lifestyle Collection' }],
   },
   twitter: {
     card: 'summary_large_image', title: 'FASHIONZ EMPIRE | Fashion & Lifestyle',

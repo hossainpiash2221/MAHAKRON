@@ -1742,7 +1742,16 @@ export default function AdminPage() {
                             <div key={i} className="min-w-0 rounded-xl border border-[#e7e7e7] p-2 sm:p-3">
                               <div className="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-[#fafafa]">
                                 {src ? (
-                                  <img src={src} alt={`Product image ${i + 1}`} className="h-full w-full object-contain" />
+                                  <button
+                                    type="button"
+                                    onClick={() => setLightbox({ src, alt: `Product image ${i + 1}` })}
+                                    aria-label={`View product image ${i + 1} larger`}
+                                    title="Click to enlarge"
+                                    className="group relative h-full w-full cursor-zoom-in"
+                                  >
+                                    <img src={src} alt={`Product image ${i + 1}`} className="h-full w-full object-contain" />
+                                    <span className="pointer-events-none absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">View</span>
+                                  </button>
                                 ) : (
                                   <Package size={25} className="text-[#bbb]" />
                                 )}
@@ -2616,7 +2625,7 @@ export default function AdminPage() {
 
       </div>
 
-      {/* Order product image lightbox */}
+      {/* Shared image lightbox: order items and edit-product previews */}
 
       {lightbox && (
 

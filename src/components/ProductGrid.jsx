@@ -42,7 +42,7 @@ export default function ProductGrid({
   });
 
   return (
-    <ul className="grid grid-cols-2 gap-x-1 md:gap-x-2 gap-y-4 md:grid-cols-3 min-[1340px]:grid-cols-4 min-[1400px]:grid-cols-5 min-[1760px]:grid-cols-6">
+    <ul className="grid grid-cols-2 gap-x-1 md:gap-x-2 gap-y-4 md:grid-cols-3 min-[1040px]:grid-cols-4 min-[1400px]:grid-cols-5 min-[1760px]:grid-cols-6">
       {filteredProducts.map((p, i) => (
         <ProductCard
           key={p.id}

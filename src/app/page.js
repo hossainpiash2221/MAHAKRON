@@ -21,9 +21,16 @@ export default function Home() {
       {/* <GenderTiles /> */}
       
       <CategoryRow></CategoryRow>
-      <FeaturedProducts />
-         {/* <HeroProductSlider category="Batik" /> */}
-         <GenderProductSlider gender="male" />
+      <div className='py-10'>
+        <h2 className='font-display text-3xl font-bold uppercase tracking-tight text-center'>WOMEN'S STYLE</h2>
+      </div>
+      <FeaturedProducts gender="female" />
+      <div className='py-10'>
+        <h2 className='font-display text-3xl font-bold uppercase tracking-tight text-center'>MEN'S STYLE</h2>
+      </div>
+      <FeaturedProducts gender="male" />
+         {/* <HeroProductSlider/> */}
+         <GenderProductSlider gender="female"  />
          
 
   <section

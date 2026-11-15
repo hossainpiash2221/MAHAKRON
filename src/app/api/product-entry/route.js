@@ -13,19 +13,30 @@ const ALLOWED_ACTIONS = [
   'courierSend',
 ];
 
+function errorResponse(message, status = 500, code = 'ADMIN_ERROR') {
+  return NextResponse.json(
+    {
+      success: false,
+      error: message,
+      code,
+    },
+    { status }
+  );
+}
+
 export async function POST(request) {
-  // Verify Google authentication and admin access
+  // 1. Verify admin authentication
   let session;
 
   try {
     session = await auth();
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Authentication verification failed',
-      },
-      { status: 401 }
+  } catch (error) {
+    console.error('[Admin API] Authentication error:', error);
+
+    return errorResponse(
+      'Authentication verification failed.',
+      401,
+      'AUTH_FAILED'
     );
   }
 
@@ -33,81 +44,107 @@ export async function POST(request) {
     !session?.user?.email ||
     !isAdminEmail(session.user.email)
   ) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Unauthorized admin access',
-      },
-      { status: 401 }
+    return errorResponse(
+      'Unauthorized admin access.',
+      401,
+      'UNAUTHORIZED'
     );
   }
 
+  // 2. Verify Apps Script configuration
   const url = process.env.APPS_SCRIPT_URL;
   const secret = process.env.APPS_SCRIPT_SECRET;
 
   if (!url || !secret) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Apps Script configuration is missing',
-      },
-      { status: 500 }
+    console.error('[Admin API] Missing Apps Script configuration');
+
+    return errorResponse(
+      'Apps Script configuration is missing.',
+      500,
+      'CONFIG_MISSING'
     );
   }
 
+  // 3. Read and validate request
+  let body;
+
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return errorResponse(
+      'Invalid JSON request.',
+      400,
+      'INVALID_JSON'
+    );
+  }
 
-    // Validate supported actions
-    if (!ALLOWED_ACTIONS.includes(body?.action)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unsupported action',
-        },
-        { status: 400 }
+  if (
+    !body ||
+    typeof body !== 'object' ||
+    Array.isArray(body) ||
+    !ALLOWED_ACTIONS.includes(body.action)
+  ) {
+    return errorResponse(
+      'Unsupported action.',
+      400,
+      'INVALID_ACTION'
+    );
+  }
+
+  const action = body.action;
+
+  if (action === 'courierSend') {
+    if (
+      typeof body.orderId !== 'string' ||
+      !body.orderId.trim()
+    ) {
+      return errorResponse(
+        'Valid orderId is required.',
+        400,
+        'INVALID_ORDER_ID'
       );
     }
+  }
 
-    // Validate Steadfast request
-    if (body.action === 'courierSend') {
-      if (
-        typeof body.orderId !== 'string' ||
-        !body.orderId.trim()
-      ) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Valid orderId is required',
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Prevent oversized payloads
-    if (JSON.stringify(body).length > 9_000_000) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Payload too large',
-        },
-        { status: 413 }
+  if (action === 'productSave') {
+    if (
+      !body.product ||
+      typeof body.product !== 'object' ||
+      Array.isArray(body.product) ||
+      !String(body.product.id || '').trim()
+    ) {
+      return errorResponse(
+        'Valid product ID is required.',
+        400,
+        'INVALID_PRODUCT'
       );
     }
+  }
 
-    // Forward request to Google Apps Script
+  const payload = JSON.stringify({
+    ...body,
+    secret,
+  });
+
+  if (payload.length > 9_000_000) {
+    return errorResponse(
+      'Payload too large.',
+      413,
+      'PAYLOAD_TOO_LARGE'
+    );
+  }
+
+  // 4. Forward request to Google Apps Script
+  try {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: JSON.stringify({
-        ...body,
-        secret,
-      }),
+      body: payload,
       redirect: 'follow',
       cache: 'no-store',
+      signal: AbortSignal.timeout(55000),
     });
 
     const raw = await response.text();
@@ -117,27 +154,65 @@ export async function POST(request) {
     try {
       data = JSON.parse(raw);
     } catch {
-      throw new Error(
-        'Apps Script returned non-JSON response. Check deployment URL and permissions.'
+      console.error(
+        '[Admin API] Non-JSON response:',
+        {
+          action,
+          status: response.status,
+          contentType: response.headers.get('content-type'),
+        }
+      );
+
+      return errorResponse(
+        'Google Apps Script returned an invalid response. Check its deployment and permissions.',
+        502,
+        'INVALID_SCRIPT_RESPONSE'
       );
     }
 
-    if (!response.ok || !data.success) {
-      throw new Error(
-        data.error || 'Apps Script request failed'
+    if (!response.ok || !data?.success) {
+      const scriptError =
+        typeof data?.error === 'string'
+          ? data.error
+          : 'Google Apps Script request failed.';
+
+      console.error('[Admin API] Apps Script error:', {
+        action,
+        status: response.status,
+        error: scriptError,
+      });
+
+      return errorResponse(
+        scriptError,
+        response.ok ? 422 : 502,
+        'APPS_SCRIPT_ERROR'
       );
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('Admin API error:', error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Admin request failed. Please try again.',
-      },
-      { status: 500 }
+  } catch (error) {
+    console.error('[Admin API] Request failed:', {
+      action,
+      name: error?.name,
+      message: error?.message,
+    });
+
+    if (
+      error?.name === 'TimeoutError' ||
+      error?.name === 'AbortError'
+    ) {
+      return errorResponse(
+        'Google Apps Script request timed out. Check whether the product was saved before retrying.',
+        504,
+        'SCRIPT_TIMEOUT'
+      );
+    }
+
+    return errorResponse(
+      'Unable to connect to Google Apps Script. Check Vercel server logs.',
+      502,
+      'SCRIPT_CONNECTION_ERROR'
     );
   }
 }

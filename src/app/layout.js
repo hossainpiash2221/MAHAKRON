@@ -115,11 +115,19 @@ export const metadata = {
     },
   },
 
+
   icons: {
-    icon: '/favIcon.webp',
-    shortcut: '/favIcon.webp',
-    apple: '/favIcon.webp',
+    icon: [
+      {
+        url: '/favicon.png',
+        sizes: '96x96',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
+
 };
 
 export const viewport = {

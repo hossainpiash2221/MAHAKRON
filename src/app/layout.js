@@ -13,6 +13,7 @@ import Footer from '@/components/Footer';
 import ConditionalMobileBottomNav from '@/components/ConditionalMobileBottomNav';
 import { Suspense } from 'react';
 import { ToastContainer, Bounce } from 'react-toastify';
+import { Analytics } from "@vercel/analytics/next";
 
 const display = Bricolage_Grotesque({
   subsets: ['latin'],
@@ -181,6 +182,7 @@ export default async function RootLayout({ children }) {
                 className="bg-white bg-[url('/bg.webp')] bg-cover bg-center bg-fixed pb-20 lg:pb-0"
               >
                 {children}
+                <Analytics /> 
 
                 <ToastContainer
                   position="bottom-right"

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -98,7 +99,16 @@ export default function MobileBottomNav() {
         <Link href="/" className={`${navItem} ${pathname === '/' ? active : idle}`}><Icon name="home"/>Home</Link>
         <button type="button" onClick={() => setOpen(true)} className={`${navItem} ${open ? active : idle}`} aria-expanded={open}><Icon name="categories"/>Categories</button>
         <Link href="/products" className={`${navItem} ${pathname === '/products' ? active : idle}`}><Icon name="products"/>Products</Link>
-        <Link href="/contact" className={`${navItem} ${pathname === '/contact' ? active : idle}`}><Icon name="contact"/>Contact</Link>
+
+        <a
+          href="https://wa.me/8801400505097?text=Hello%20Fashionz%20Empire%2C%20I%20need%20some%20help."
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${navItem} ${idle}`}
+        >
+          <Icon name="contact"/>
+          Contact
+        </a>
       </div>
     </nav>
   </>;

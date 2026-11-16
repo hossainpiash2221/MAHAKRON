@@ -12,7 +12,7 @@ const CONTACT = {
 
   facebook: "https://www.facebook.com/FashionzEmpire",
   instagram: "https://www.instagram.com/p/DeZW9VpGBog/?cplk=NDJsMWQ2cmFhajhy",
-  tiktok: "https://www.tiktok.com/@mahakron?lang=en",
+  tiktok: "https://www.tiktok.com/@mahakron0",
 };
 
 // তোমার website-এর actual route অনুযায়ী পরিবর্তন করবে
@@ -95,13 +95,13 @@ export default function Footer() {
 
               {/* CONTACT DETAILS */}
               <div className="mt-8 space-y-4">
-                {/* <a
+                <a
                 href={`tel:${CONTACT.phone.replace(/\s/g, "")}`}
                 className="flex items-center gap-3 text-sm text-white/75 transition-colors hover:text-white"
               >
                 <FaPhoneAlt className="shrink-0 text-[13px]" />
                 <span>{CONTACT.phone}</span>
-              </a> */}
+              </a>
 
                 <a
                   href={`mailto:${CONTACT.email}`}

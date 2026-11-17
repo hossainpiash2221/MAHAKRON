@@ -87,7 +87,7 @@ export default function ProductView({ p }) {
                     border border-white/20
                     bg-dark_green/90
                     px-3 py-1.5
-                    text-[16px] font-semibold
+                    text-[10px] font-semibold
                     tracking-wide text-white
                     shadow-sm backdrop-blur-sm
                     sm:left-4 sm:top-4

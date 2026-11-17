@@ -1995,7 +1995,7 @@
 
 //                           <div className="min-w-0 flex-1 space-y-1.5">
 
-//                             <div className="line-clamp-2 break-words text-sm font-semibold text-[#202020]">
+//                             <div className=" break-words text-sm font-semibold text-[#202020]">
 
 //                               {p.productName}
 
@@ -4753,7 +4753,7 @@ export default function AdminPage() {
 
                           <div className="min-w-0 flex-1 space-y-1.5">
 
-                            <div className="line-clamp-2 break-words text-sm font-semibold text-[#202020]">
+                            <div className=" break-words text-sm font-semibold text-[#202020]">
 
                               {p.productName}
 

@@ -71,7 +71,7 @@ export default function CartDrawer({ open, onClose }) {
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-dark_green">{item.name}</h3>
+                      <h3 className=" text-sm font-semibold leading-5 text-dark_green">{item.name}</h3>
                       <button type="button" onClick={() => remove(item.key)} aria-label={`Remove ${item.name}`} className="shrink-0 text-ink/40 hover:text-pink">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>

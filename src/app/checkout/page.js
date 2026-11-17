@@ -680,7 +680,7 @@ export default function CheckoutPage() {
                           <div className="min-w-0">
                             <Link
                               href={`/products/${item.slug}`}
-                              className="line-clamp-2 text-[13px] font-semibold leading-5 transition-colors hover:text-pink"
+                              className=" text-[13px] font-semibold leading-5 transition-colors hover:text-pink"
                             >
                               {item.name}
                             </Link>

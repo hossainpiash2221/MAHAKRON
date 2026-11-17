@@ -143,7 +143,7 @@ export default function CartPage() {
                       <div className="min-w-0">
                         <Link
                           href={`/products/${i.slug}`}
-                          className="line-clamp-2 text-sm font-semibold leading-6 transition-colors hover:text-pink sm:text-base"
+                          className=" text-sm font-semibold leading-6 transition-colors hover:text-pink sm:text-base"
                         >
                           {i.name}
                         </Link>

@@ -95,8 +95,8 @@ function StatCard({ icon: Icon, label, value, accent = false }) {
     <div className="group flex items-center gap-3 rounded-2xl border border-dark_green/[0.06] bg-white p-4 shadow-[0_8px_30px_-20px_rgba(16,53,64,.2)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_35px_-20px_rgba(16,53,64,.25)] sm:p-5">
       <div
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accent
-            ? "bg-pink/10 text-pink"
-            : "bg-dark_green/5 text-dark_green"
+          ? "bg-pink/10 text-pink"
+          : "bg-dark_green/5 text-dark_green"
           }`}
       >
         <Icon size={19} strokeWidth={1.8} />
@@ -182,7 +182,7 @@ function OrderProduct({ item }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-dark_green">
+        <h3 className="text-sm font-semibold leading-5 text-dark_green">
           {item.name}
         </h3>
 
@@ -192,16 +192,21 @@ function OrderProduct({ item }) {
           </p>
         )}
 
-        <p className="mt-1.5 text-[11px] font-medium text-dark_green/50">
+        <p className="mt-1.5 text-[11px] md:text-[14px] font-medium text-dark_green/50">
           Qty: {item.qty}
         </p>
+        {item.productId != null && (
+          <p className="mt-1 text-[11px] md:text-[14px] font-medium text-dark_green/50">
+            Product Code: {item.productId}
+          </p>
+        )}
       </div>
 
       <div className="shrink-0 text-right">
         <p className="text-sm font-bold text-dark_green">
           {taka(item.price * item.qty)}
         </p>
-        <p className="mt-1 text-[10px] text-dark_green/40">
+        <p className="mt-1 text-[10px] md:text[14px] text-dark_green/40">
           {taka(item.price)} / pc
         </p>
       </div>
@@ -278,19 +283,19 @@ function OrderCard({ order, index }) {
           />
 
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-dark_green/45">
+            <p className="text-[10px] md:text-[14px] font-bold uppercase tracking-wider text-dark_green/45">
               Delivering to
             </p>
 
-            <p className="mt-1 text-sm font-semibold text-dark_green">
+            <p className="mt-1 text-sm md:text-[14px] font-semibold text-dark_green line-">
               {o.customer.name}
             </p>
 
-            <p className="mt-0.5 break-words text-xs leading-5 text-dark_green/55">
+            <p className="mt-0.5 break-words text-xs md:text-[14px] leading-5 text-dark_green/55">
               {o.customer.address}, {o.customer.city}
             </p>
 
-            <p className="mt-0.5 text-xs text-dark_green/55">
+            <p className="mt-0.5 text-xs md:text[14px] text-dark_green/55">
               {o.customer.phone}
             </p>
           </div>
@@ -299,7 +304,7 @@ function OrderCard({ order, index }) {
         {/* Compact total section */}
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-dashed border-dark_green/10 pt-4">
           <div>
-            <p className="flex items-center gap-1.5 text-[11px] text-dark_green/50">
+            <p className="flex items-center gap-1.5 text-[11px] md:text-[14px] text-dark_green/50">
               <Truck size={14} />
               Delivery: {finalDelivery ? taka(finalDelivery) : "Free"}
             </p>
@@ -382,7 +387,7 @@ export default function MyOrders() {
 
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
-              
+
 
               <h1 className="font-display text-4xl font-semibold uppercase tracking-tight sm:text-5xl">
                 My Orders<span className="text-[#F5A5D2]">.</span>
@@ -426,17 +431,17 @@ export default function MyOrders() {
 
         {/* Order history heading */}
         <div className="mt-9 flex flex-wrap items-end justify-between gap-3">
-          <div>
+          <div className="max-w-[600px] ">
             <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-pink">
               Your collection
             </p>
 
-            <h2 className="font-display text-2xl font-semibold tracking-tight text-dark_green sm:text-3xl">
+            <h2 className="mb-6  font-display text-2xl font-semibold tracking-tight text-dark_green sm:text-3xl">
               Order History
             </h2>
 
-            <p className="mt-1.5 text-xs text-dark_green/50">
-              Orders from the last 30 days, saved on this browser.
+            <p className="mt-1.5 text-ms text-dark_green/50 ">
+              গত ৩০ দিনের অর্ডারগুলো এই ব্রাউজারে সংরক্ষিত আছে। অনুগ্রহ করে নতুন অর্ডারগুলোর স্ক্রিনশট তুলে সংরক্ষণ করে রাখুন।
             </p>
           </div>
 

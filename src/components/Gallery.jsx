@@ -665,13 +665,13 @@ export default function Gallery({
       >
         <div
           data-fly-src
-          className="aspect-[4/5] overflow-hidden rounded bg-mist"
+          className="aspect-[9/16] overflow-hidden rounded bg-mist"
         >
           <Img
             src={images[currentIndex]}
             alt={alt}
             priority
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-top"
             style={{
               transform: hover
                 ? `scale(${MAX_ZOOM})`

@@ -99,7 +99,7 @@ export default function ProductCard({ p, priority = false }) {
         <div
           ref={imgBox}
           className="
-            relative aspect-[4/5] overflow-hidden
+            relative aspect-[9/16] overflow-hidden
             bg-mist
           "
         >
@@ -155,7 +155,7 @@ export default function ProductCard({ p, priority = false }) {
               className="
                 absolute left-1.5 top-1.5
                 rounded-sm bg-pink
-                px-1.5 py-1 text-[14px]
+                px-1.5 py-1 text-[10px]
                 font-bold text-white
                 sm:left-2 sm:top-2
                 sm:px-2 sm:text-[16px]
@@ -195,7 +195,7 @@ export default function ProductCard({ p, priority = false }) {
         >
           <h3
             className="
-              min-h-[2.5rem] break-words text-xs font-semibold
+               break-words text-xs font-semibold
               leading-5 text-dark_green transition-colors duration-200
               group-hover:text-pink sm:text-sm md:text-base
             "
@@ -207,7 +207,7 @@ export default function ProductCard({ p, priority = false }) {
         {/* PRICE */}
         <div
           className="
-            flex min-w-0 flex-wrap
+            flex min-w-0 flex-wrap mt-auto
             items-baseline gap-x-1.5 gap-y-0
           "
         >
